@@ -1,0 +1,151 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories\Eloquent;
+
+use App\Enums\ProductStatus;
+use App\Models\Product;
+use App\Repositories\Contracts\ProductRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+class ProductRepository implements ProductRepositoryInterface
+{
+    public function __construct(
+        protected Product $model
+    ) {}
+
+    public function findById(string $id): ?Product
+    {
+        return $this->model->with(['seller', 'category', 'brand', 'images'])->find($id);
+    }
+
+    public function findBySlug(string $slug): ?Product
+    {
+        return $this->model
+            ->with(['seller', 'category', 'brand', 'images'])
+            ->where('slug', $slug)
+            ->first();
+    }
+
+    public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
+    {
+        $query = $this->model->with(['seller', 'category', 'brand', 'images']);
+
+        if (isset($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        if (isset($filters['brand_id'])) {
+            $query->where('brand_id', $filters['brand_id']);
+        }
+
+        if (isset($filters['condition'])) {
+            $query->where('condition', $filters['condition']);
+        }
+
+        if (isset($filters['min_price'])) {
+            $query->where('price', '>=', $filters['min_price']);
+        }
+
+        if (isset($filters['max_price'])) {
+            $query->where('price', '<=', $filters['max_price']);
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortDir = $filters['sort_dir'] ?? 'desc';
+        $query->orderBy($sortBy, $sortDir);
+
+        return $query->paginate($perPage);
+    }
+
+    public function create(array $data): Product
+    {
+        return $this->model->create($data);
+    }
+
+    public function update(string $id, array $data): ?Product
+    {
+        $product = $this->model->find($id);
+
+        if (! $product) {
+            return null;
+        }
+
+        $product->update($data);
+
+        return $product->fresh(['seller', 'category', 'brand', 'images']);
+    }
+
+    public function delete(string $id): bool
+    {
+        $product = $this->model->find($id);
+
+        if (! $product) {
+            return false;
+        }
+
+        return (bool) $product->delete();
+    }
+
+    public function getBySeller(string $sellerId, int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->model
+            ->with(['category', 'brand', 'images'])
+            ->where('seller_id', $sellerId)
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    public function getActive(int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->model
+            ->with(['seller', 'category', 'brand', 'images'])
+            ->where('status', ProductStatus::Active)
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    public function search(string $query, array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $builder = $this->model
+            ->with(['seller', 'category', 'brand', 'images'])
+            ->where('status', ProductStatus::Active)
+            ->where(function ($q) use ($query) {
+                $q->where('title', 'ilike', "%{$query}%")
+                  ->orWhere('description', 'ilike', "%{$query}%");
+            });
+
+        if (isset($filters['category_id'])) {
+            $builder->where('category_id', $filters['category_id']);
+        }
+
+        if (isset($filters['brand_id'])) {
+            $builder->where('brand_id', $filters['brand_id']);
+        }
+
+        if (isset($filters['condition'])) {
+            $builder->where('condition', $filters['condition']);
+        }
+
+        if (isset($filters['min_price'])) {
+            $builder->where('price', '>=', $filters['min_price']);
+        }
+
+        if (isset($filters['max_price'])) {
+            $builder->where('price', '<=', $filters['max_price']);
+        }
+
+        return $builder->latest()->paginate($perPage);
+    }
+
+    public function incrementViews(string $id): void
+    {
+        $this->model->where('id', $id)->increment('views_count');
+    }
+}

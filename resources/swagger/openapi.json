@@ -1,0 +1,822 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "rewear.id API",
+    "description": "API documentation for rewear.id — Marketplace Jual Beli Pakaian Preloved dengan Sistem Escrow.\n\n## Authentication\nAll authenticated endpoints require a Bearer token from Sanctum. Include it in the `Authorization` header:\n```\nAuthorization: Bearer {token}\n```\n\n## Flow Utama\n1. **Register/Login** → Dapatkan token\n2. **Browse Products** → Cari pakaian preloved\n3. **Create Order** → Buat pesanan\n4. **Payment** → Bayar via Midtrans\n5. **Escrow** → Dana ditahan sampai barang diterima\n6. **Confirm Received** → Pembeli konfirmasi → Dana dilepas ke penjual",
+    "version": "1.0.0",
+    "contact": {
+      "name": "rewear.id",
+      "email": "support@rewear.id"
+    }
+  },
+  "servers": [
+    {
+      "url": "{protocol}://{host}",
+      "variables": {
+        "protocol": { "default": "http", "enum": ["http", "https"] },
+        "host": { "default": "127.0.0.1:8000" }
+      }
+    }
+  ],
+  "tags": [
+    { "name": "Auth", "description": "Authentication & Registration" },
+    { "name": "Profile", "description": "User profile management" },
+    { "name": "Addresses", "description": "User address management" },
+    { "name": "Bank Accounts", "description": "User bank account management" },
+    { "name": "Discovery", "description": "Categories, Brands, Search, Province, Cities" },
+    { "name": "Products", "description": "Product browsing (public)" },
+    { "name": "Seller Products", "description": "Seller product management" },
+    { "name": "Bookmarks", "description": "Product bookmarks" },
+    { "name": "Orders", "description": "Order management" },
+    { "name": "Payments", "description": "Payment initiation" },
+    { "name": "Escrow", "description": "Escrow confirmation" },
+    { "name": "Shipment", "description": "Shipping & cost calculation" },
+    { "name": "Chat", "description": "Conversations & Messages" },
+    { "name": "Reviews", "description": "Product reviews" },
+    { "name": "Notifications", "description": "User notifications" },
+    { "name": "Withdrawals", "description": "Seller fund withdrawals" },
+    { "name": "Admin - Users", "description": "Admin user management" },
+    { "name": "Admin - Products", "description": "Admin product moderation" },
+    { "name": "Admin - Disputes", "description": "Admin dispute resolution" },
+    { "name": "Admin - Withdrawals", "description": "Admin withdrawal approval" },
+    { "name": "Admin - Reports", "description": "Admin reports & analytics" },
+    { "name": "Admin - Seller Verification", "description": "Admin seller KTP verification" },
+    { "name": "Webhooks", "description": "External webhook handlers" }
+  ],
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register new user",
+        "operationId": "auth.register",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password", "password_confirmation"],
+                "properties": {
+                  "name": { "type": "string", "maxLength": 100, "example": "John Doe" },
+                  "email": { "type": "string", "format": "email", "example": "john@example.com" },
+                  "password": { "type": "string", "minLength": 8, "example": "password123" },
+                  "password_confirmation": { "type": "string", "example": "password123" },
+                  "phone": { "type": "string", "maxLength": 20, "example": "08123456789" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Registration successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login",
+        "operationId": "auth.login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "john@example.com" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout (revoke token)",
+        "operationId": "auth.logout",
+        "security": [{ "sanctum": [] }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/MessageResponse" }
+        }
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Send password reset link",
+        "operationId": "auth.forgotPassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/MessageResponse" }
+        }
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset password with token",
+        "operationId": "auth.resetPassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token", "email", "password", "password_confirmation"],
+                "properties": {
+                  "token": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 },
+                  "password_confirmation": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/MessageResponse" }
+        }
+      }
+    },
+    "/api/v1/auth/email/verify/{id}/{hash}": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Verify email address",
+        "operationId": "auth.verifyEmail",
+        "security": [{ "sanctum": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "hash", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/MessageResponse" }
+        }
+      }
+    },
+    "/api/v1/auth/email/resend": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Resend email verification",
+        "operationId": "auth.resendVerification",
+        "security": [{ "sanctum": [] }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/MessageResponse" }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Get current user profile",
+        "operationId": "profile.show",
+        "security": [{ "sanctum": [] }],
+        "responses": {
+          "200": { "description": "Success", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/User" } } } } } }
+        }
+      },
+      "put": {
+        "tags": ["Profile"],
+        "summary": "Update profile",
+        "operationId": "profile.update",
+        "security": [{ "sanctum": [] }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "maxLength": 100 },
+                  "phone": { "type": "string", "maxLength": 20 },
+                  "bio": { "type": "string", "maxLength": 500 },
+                  "avatar_url": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/User" } } } } } }
+        }
+      }
+    },
+    "/api/v1/addresses": {
+      "get": {
+        "tags": ["Addresses"], "summary": "List user addresses", "operationId": "addresses.index",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Success", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Address" } } } } } } } }
+      },
+      "post": {
+        "tags": ["Addresses"], "summary": "Create address", "operationId": "addresses.store",
+        "security": [{ "sanctum": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AddressRequest" } } } },
+        "responses": { "201": { "description": "Created" } }
+      }
+    },
+    "/api/v1/addresses/{address}": {
+      "put": {
+        "tags": ["Addresses"], "summary": "Update address", "operationId": "addresses.update",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "address", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AddressRequest" } } } },
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "tags": ["Addresses"], "summary": "Delete address", "operationId": "addresses.destroy",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "address", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } }
+      }
+    },
+    "/api/v1/bank-accounts": {
+      "get": {
+        "tags": ["Bank Accounts"], "summary": "List bank accounts", "operationId": "bankAccounts.index",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Success" } }
+      },
+      "post": {
+        "tags": ["Bank Accounts"], "summary": "Add bank account", "operationId": "bankAccounts.store",
+        "security": [{ "sanctum": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["bank_name", "account_number", "account_holder_name"], "properties": { "bank_name": { "type": "string", "maxLength": 50, "example": "BCA" }, "account_number": { "type": "string", "maxLength": 30, "example": "1234567890" }, "account_holder_name": { "type": "string", "maxLength": 100, "example": "John Doe" } } } } } },
+        "responses": { "201": { "description": "Created" } }
+      }
+    },
+    "/api/v1/bank-accounts/{bankAccount}": {
+      "delete": {
+        "tags": ["Bank Accounts"], "summary": "Delete bank account", "operationId": "bankAccounts.destroy",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "bankAccount", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } }
+      }
+    },
+    "/api/v1/categories": {
+      "get": {
+        "tags": ["Discovery"], "summary": "List active categories (with children)", "operationId": "categories.index",
+        "responses": { "200": { "description": "Success", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Category" } } } } } } } }
+      }
+    },
+    "/api/v1/brands": {
+      "get": {
+        "tags": ["Discovery"], "summary": "List active brands", "operationId": "brands.index",
+        "responses": { "200": { "description": "Success", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Brand" } } } } } } } }
+      }
+    },
+    "/api/v1/search": {
+      "get": {
+        "tags": ["Discovery"], "summary": "Search products", "operationId": "search",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Search keyword" },
+          { "name": "category_id", "in": "query", "schema": { "type": "string" } },
+          { "name": "brand_id", "in": "query", "schema": { "type": "string" } },
+          { "name": "condition", "in": "query", "schema": { "type": "string", "enum": ["new_with_tag", "like_new", "good", "fair"] } },
+          { "name": "size", "in": "query", "schema": { "type": "string" } },
+          { "name": "min_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "max_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "sort_by", "in": "query", "schema": { "type": "string", "enum": ["newest", "price_asc", "price_desc", "popular"] } }
+        ],
+        "responses": { "200": { "description": "Paginated products" } }
+      }
+    },
+    "/api/v1/provinces": {
+      "get": {
+        "tags": ["Discovery"], "summary": "List provinces", "operationId": "provinces.index",
+        "responses": { "200": { "description": "Success", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Province" } } } } } } } }
+      }
+    },
+    "/api/v1/cities": {
+      "get": {
+        "tags": ["Discovery"], "summary": "List cities", "operationId": "cities.index",
+        "responses": { "200": { "description": "Success", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/City" } } } } } } } }
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "tags": ["Products"], "summary": "Browse products", "operationId": "products.index",
+        "parameters": [
+          { "name": "category_id", "in": "query", "schema": { "type": "string" } },
+          { "name": "brand_id", "in": "query", "schema": { "type": "string" } },
+          { "name": "condition", "in": "query", "schema": { "type": "string", "enum": ["new_with_tag", "like_new", "good", "fair"] } },
+          { "name": "min_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "max_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Paginated product list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaginatedProducts" } } } } }
+      }
+    },
+    "/api/v1/products/{slug}": {
+      "get": {
+        "tags": ["Products"], "summary": "Show product detail by slug", "operationId": "products.show",
+        "parameters": [{ "name": "slug", "in": "path", "required": true, "schema": { "type": "string" }, "example": "kemeja-flannel-uniqlo-size-l" }],
+        "responses": { "200": { "description": "Product detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Product" } } } } } } }
+      }
+    },
+    "/api/v1/seller/products": {
+      "get": {
+        "tags": ["Seller Products"], "summary": "List seller's own products", "operationId": "seller.products.index",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Paginated seller products" } }
+      },
+      "post": {
+        "tags": ["Seller Products"], "summary": "Create product", "operationId": "seller.products.store",
+        "security": [{ "sanctum": [] }],
+        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "$ref": "#/components/schemas/ProductRequest" } } } },
+        "responses": { "201": { "description": "Product created" } }
+      }
+    },
+    "/api/v1/seller/products/{product}": {
+      "put": {
+        "tags": ["Seller Products"], "summary": "Update product", "operationId": "seller.products.update",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "product", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductRequest" } } } },
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "tags": ["Seller Products"], "summary": "Delete product", "operationId": "seller.products.destroy",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "product", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } }
+      }
+    },
+    "/api/v1/seller/products/{product}/images": {
+      "post": {
+        "tags": ["Seller Products"], "summary": "Upload product image", "operationId": "seller.products.images.store",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "product", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "type": "object", "required": ["image"], "properties": { "image": { "type": "string", "format": "binary" }, "position": { "type": "integer" } } } } } },
+        "responses": { "201": { "description": "Image uploaded" } }
+      }
+    },
+    "/api/v1/seller/products/{product}/images/{image}": {
+      "delete": {
+        "tags": ["Seller Products"], "summary": "Delete product image", "operationId": "seller.products.images.destroy",
+        "security": [{ "sanctum": [] }],
+        "parameters": [
+          { "name": "product", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "image", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } }
+      }
+    },
+    "/api/v1/bookmarks": {
+      "get": {
+        "tags": ["Bookmarks"], "summary": "List bookmarked products", "operationId": "bookmarks.index",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Paginated bookmarks" } }
+      }
+    },
+    "/api/v1/bookmarks/{product}/toggle": {
+      "post": {
+        "tags": ["Bookmarks"], "summary": "Toggle bookmark on product", "operationId": "bookmarks.toggle",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "product", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Bookmark toggled", "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string" }, "data": { "type": "object", "properties": { "is_bookmarked": { "type": "boolean" } } } } } } } } }
+      }
+    },
+    "/api/v1/bookmarks/{product}": {
+      "delete": {
+        "tags": ["Bookmarks"], "summary": "Remove bookmark", "operationId": "bookmarks.destroy",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "product", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } }
+      }
+    },
+    "/api/v1/orders": {
+      "get": {
+        "tags": ["Orders"], "summary": "List buyer's orders", "operationId": "orders.index",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Paginated orders" } }
+      },
+      "post": {
+        "tags": ["Orders"], "summary": "Create order", "operationId": "orders.store",
+        "security": [{ "sanctum": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OrderRequest" } } } },
+        "responses": { "201": { "description": "Order created", "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string" }, "data": { "$ref": "#/components/schemas/Order" } } } } } } }
+      }
+    },
+    "/api/v1/orders/{order}": {
+      "get": {
+        "tags": ["Orders"], "summary": "Show order detail", "operationId": "orders.show",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "order", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Order detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Order" } } } } } } }
+      }
+    },
+    "/api/v1/seller/orders": {
+      "get": {
+        "tags": ["Orders"], "summary": "List seller's orders", "operationId": "orders.seller",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Paginated seller orders" } }
+      }
+    },
+    "/api/v1/orders/{order}/pay": {
+      "post": {
+        "tags": ["Payments"], "summary": "Initiate payment (get Snap token)", "operationId": "payments.initiate",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "order", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Snap token generated", "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string" }, "data": { "type": "object", "properties": { "snap_token": { "type": "string" }, "redirect_url": { "type": "string", "format": "uri" } } } } } } } } }
+      }
+    },
+    "/api/v1/orders/{order}/confirm-received": {
+      "post": {
+        "tags": ["Escrow"], "summary": "Buyer confirms receipt → release escrow", "operationId": "escrow.confirmReceived",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "order", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Escrow released" } }
+      }
+    },
+    "/api/v1/orders/{order}/ship": {
+      "post": {
+        "tags": ["Shipment"], "summary": "Seller ships order (input tracking)", "operationId": "shipments.ship",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "order", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["courier", "service", "tracking_number"], "properties": { "courier": { "type": "string", "enum": ["jne", "jnt", "sicepat", "anteraja"], "example": "jne" }, "service": { "type": "string", "example": "REG" }, "tracking_number": { "type": "string", "example": "JN1234567890" } } } } } },
+        "responses": { "200": { "description": "Shipment created" } }
+      }
+    },
+    "/api/v1/shipping/cost": {
+      "post": {
+        "tags": ["Shipment"], "summary": "Calculate shipping cost", "operationId": "shipping.cost",
+        "security": [{ "sanctum": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["origin", "destination", "weight", "courier"], "properties": { "origin": { "type": "integer", "description": "Origin city ID", "example": 152 }, "destination": { "type": "integer", "description": "Destination city ID", "example": 444 }, "weight": { "type": "integer", "description": "Weight in grams", "example": 500 }, "courier": { "type": "string", "enum": ["jne", "jnt", "sicepat", "anteraja"], "example": "jne" } } } } } },
+        "responses": { "200": { "description": "Shipping cost options" } }
+      }
+    },
+    "/api/v1/conversations": {
+      "get": {
+        "tags": ["Chat"], "summary": "List conversations", "operationId": "conversations.index",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Paginated conversations" } }
+      },
+      "post": {
+        "tags": ["Chat"], "summary": "Start conversation about a product", "operationId": "conversations.store",
+        "security": [{ "sanctum": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["product_id"], "properties": { "product_id": { "type": "string", "description": "Product ULID" } } } } } },
+        "responses": { "201": { "description": "Conversation created" } }
+      }
+    },
+    "/api/v1/conversations/{conversation}/messages": {
+      "get": {
+        "tags": ["Chat"], "summary": "List messages in conversation", "operationId": "messages.index",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "conversation", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Paginated messages" } }
+      },
+      "post": {
+        "tags": ["Chat"], "summary": "Send message", "operationId": "messages.store",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "conversation", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "type": "object", "properties": { "body": { "type": "string", "maxLength": 1000 }, "image": { "type": "string", "format": "binary" } } } } } },
+        "responses": { "201": { "description": "Message sent" } }
+      }
+    },
+    "/api/v1/orders/{order}/reviews": {
+      "post": {
+        "tags": ["Reviews"], "summary": "Create review for completed order", "operationId": "reviews.store",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "order", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["rating"], "properties": { "rating": { "type": "integer", "minimum": 1, "maximum": 5, "example": 5 }, "comment": { "type": "string", "maxLength": 1000, "example": "Barang sesuai deskripsi, pengiriman cepat!" } } } } } },
+        "responses": { "201": { "description": "Review created" } }
+      }
+    },
+    "/api/v1/reviews/{review}/reply": {
+      "post": {
+        "tags": ["Reviews"], "summary": "Seller replies to review", "operationId": "reviews.reply",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "review", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["reply"], "properties": { "reply": { "type": "string", "maxLength": 1000, "example": "Terima kasih atas ulasannya!" } } } } } },
+        "responses": { "200": { "description": "Reply added" } }
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": ["Notifications"], "summary": "List notifications", "operationId": "notifications.index",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Paginated notifications" } }
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "patch": {
+        "tags": ["Notifications"], "summary": "Mark notification as read", "operationId": "notifications.markAsRead",
+        "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } }
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "patch": {
+        "tags": ["Notifications"], "summary": "Mark all notifications as read", "operationId": "notifications.markAllAsRead",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } }
+      }
+    },
+    "/api/v1/withdrawals": {
+      "get": {
+        "tags": ["Withdrawals"], "summary": "List withdrawal history", "operationId": "withdrawals.index",
+        "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Paginated withdrawals" } }
+      },
+      "post": {
+        "tags": ["Withdrawals"], "summary": "Request withdrawal", "operationId": "withdrawals.store",
+        "security": [{ "sanctum": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["bank_account_id", "amount"], "properties": { "bank_account_id": { "type": "string" }, "amount": { "type": "number", "minimum": 10000, "example": 100000 } } } } } },
+        "responses": { "201": { "description": "Withdrawal requested" } }
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": { "tags": ["Admin - Users"], "summary": "List all users", "operationId": "admin.users.index", "security": [{ "sanctum": [] }],
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "is_seller", "in": "query", "schema": { "type": "boolean" } }
+        ],
+        "responses": { "200": { "description": "Paginated users" } } }
+    },
+    "/api/v1/admin/users/{userId}/ban": {
+      "post": { "tags": ["Admin - Users"], "summary": "Ban user", "operationId": "admin.users.ban", "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } } }
+    },
+    "/api/v1/admin/users/{userId}/unban": {
+      "post": { "tags": ["Admin - Users"], "summary": "Unban user", "operationId": "admin.users.unban", "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } } }
+    },
+    "/api/v1/admin/products": {
+      "get": { "tags": ["Admin - Products"], "summary": "List products for moderation", "operationId": "admin.products.index", "security": [{ "sanctum": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["active", "sold", "archived"] } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Paginated products" } } }
+    },
+    "/api/v1/admin/products/{productId}": {
+      "delete": { "tags": ["Admin - Products"], "summary": "Remove product (moderation)", "operationId": "admin.products.destroy", "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } } }
+    },
+    "/api/v1/admin/disputes": {
+      "get": { "tags": ["Admin - Disputes"], "summary": "List disputes", "operationId": "admin.disputes.index", "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "status", "in": "query", "schema": { "type": "string", "enum": ["open", "under_review", "resolved_refund", "resolved_no_refund", "closed"] } }],
+        "responses": { "200": { "description": "Paginated disputes" } } }
+    },
+    "/api/v1/admin/disputes/{dispute}": {
+      "get": { "tags": ["Admin - Disputes"], "summary": "Show dispute detail", "operationId": "admin.disputes.show", "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "dispute", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Dispute detail" } } }
+    },
+    "/api/v1/admin/disputes/{dispute}/resolve": {
+      "post": { "tags": ["Admin - Disputes"], "summary": "Resolve dispute (refund or release)", "operationId": "admin.disputes.resolve", "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "dispute", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["resolution_type"], "properties": { "resolution_type": { "type": "string", "enum": ["refund", "release"] }, "admin_notes": { "type": "string" }, "resolution": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Dispute resolved" } } }
+    },
+    "/api/v1/admin/withdrawals": {
+      "get": { "tags": ["Admin - Withdrawals"], "summary": "List pending withdrawals", "operationId": "admin.withdrawals.index", "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Paginated withdrawals" } } }
+    },
+    "/api/v1/admin/withdrawals/{withdrawal}/approve": {
+      "post": { "tags": ["Admin - Withdrawals"], "summary": "Approve withdrawal", "operationId": "admin.withdrawals.approve", "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "withdrawal", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Withdrawal approved" } } }
+    },
+    "/api/v1/admin/withdrawals/{withdrawal}/reject": {
+      "post": { "tags": ["Admin - Withdrawals"], "summary": "Reject withdrawal", "operationId": "admin.withdrawals.reject", "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "withdrawal", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["rejection_reason"], "properties": { "rejection_reason": { "type": "string", "maxLength": 500 } } } } } },
+        "responses": { "200": { "description": "Withdrawal rejected" } } }
+    },
+    "/api/v1/admin/reports/transactions": {
+      "get": { "tags": ["Admin - Reports"], "summary": "Transaction report", "operationId": "admin.reports.transactions", "security": [{ "sanctum": [] }],
+        "parameters": [
+          { "name": "start_date", "in": "query", "schema": { "type": "string", "format": "date" } },
+          { "name": "end_date", "in": "query", "schema": { "type": "string", "format": "date" } }
+        ],
+        "responses": { "200": { "description": "Transaction report data" } } }
+    },
+    "/api/v1/admin/reports/overview": {
+      "get": { "tags": ["Admin - Reports"], "summary": "Platform overview stats", "operationId": "admin.reports.overview", "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Platform overview" } } }
+    },
+    "/api/v1/admin/seller-verifications": {
+      "get": { "tags": ["Admin - Seller Verification"], "summary": "List unverified sellers", "operationId": "admin.sellerVerifications.index", "security": [{ "sanctum": [] }],
+        "responses": { "200": { "description": "Paginated unverified sellers" } } }
+    },
+    "/api/v1/admin/seller-verifications/{userId}/verify": {
+      "post": { "tags": ["Admin - Seller Verification"], "summary": "Verify seller KTP", "operationId": "admin.sellerVerifications.verify", "security": [{ "sanctum": [] }],
+        "parameters": [{ "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Seller verified" } } }
+    },
+    "/api/webhooks/midtrans": {
+      "post": {
+        "tags": ["Webhooks"], "summary": "Midtrans payment notification webhook", "operationId": "webhooks.midtrans",
+        "description": "Receives payment status updates from Midtrans. Signature is verified via middleware.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "order_id": { "type": "string" }, "transaction_status": { "type": "string", "enum": ["capture", "settlement", "pending", "deny", "cancel", "expire", "refund"] }, "fraud_status": { "type": "string" }, "payment_type": { "type": "string" }, "status_code": { "type": "string" }, "gross_amount": { "type": "string" }, "signature_key": { "type": "string" } } } } } },
+        "responses": { "200": { "$ref": "#/components/responses/MessageResponse" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sanctum": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum Token",
+        "description": "Enter the token from login/register response"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "ulid" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "phone": { "type": "string", "nullable": true },
+          "avatar_url": { "type": "string", "nullable": true },
+          "bio": { "type": "string", "nullable": true },
+          "is_seller": { "type": "boolean" },
+          "is_seller_verified": { "type": "boolean" },
+          "rating_avg": { "type": "number", "format": "decimal" },
+          "rating_count": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": { "$ref": "#/components/schemas/User" },
+              "token": { "type": "string", "example": "1|abc123..." }
+            }
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "ulid" },
+          "title": { "type": "string" },
+          "slug": { "type": "string" },
+          "description": { "type": "string" },
+          "size": { "type": "string" },
+          "condition": { "type": "string", "enum": ["new_with_tag", "like_new", "good", "fair"] },
+          "color": { "type": "string", "nullable": true },
+          "price": { "type": "number", "format": "decimal" },
+          "weight_grams": { "type": "integer" },
+          "status": { "type": "string", "enum": ["active", "sold", "archived"] },
+          "views_count": { "type": "integer" },
+          "seller": { "$ref": "#/components/schemas/User" },
+          "category": { "$ref": "#/components/schemas/Category" },
+          "brand": { "$ref": "#/components/schemas/Brand" },
+          "images": { "type": "array", "items": { "$ref": "#/components/schemas/ProductImage" } },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ProductImage": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "ulid" },
+          "image_url": { "type": "string", "format": "uri" },
+          "position": { "type": "integer" }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "ulid" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "icon_url": { "type": "string", "nullable": true },
+          "sort_order": { "type": "integer" },
+          "children": { "type": "array", "items": { "$ref": "#/components/schemas/Category" } }
+        }
+      },
+      "Brand": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "ulid" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "logo_url": { "type": "string", "nullable": true }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "ulid" },
+          "label": { "type": "string" },
+          "recipient_name": { "type": "string" },
+          "phone": { "type": "string" },
+          "province_id": { "type": "integer" },
+          "city_id": { "type": "integer" },
+          "district": { "type": "string" },
+          "postal_code": { "type": "string" },
+          "full_address": { "type": "string" },
+          "is_default": { "type": "boolean" }
+        }
+      },
+      "AddressRequest": {
+        "type": "object",
+        "required": ["label", "recipient_name", "phone", "province_id", "city_id", "district", "postal_code", "full_address"],
+        "properties": {
+          "label": { "type": "string", "maxLength": 50, "example": "Rumah" },
+          "recipient_name": { "type": "string", "maxLength": 100, "example": "John Doe" },
+          "phone": { "type": "string", "maxLength": 20, "example": "08123456789" },
+          "province_id": { "type": "integer", "example": 6 },
+          "city_id": { "type": "integer", "example": 152 },
+          "district": { "type": "string", "maxLength": 100, "example": "Kebayoran Baru" },
+          "postal_code": { "type": "string", "maxLength": 10, "example": "12160" },
+          "full_address": { "type": "string", "example": "Jl. Sudirman No. 1" },
+          "is_default": { "type": "boolean" }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "ulid" },
+          "order_number": { "type": "string", "example": "RW-20260601-ABCDE" },
+          "buyer": { "$ref": "#/components/schemas/User" },
+          "seller": { "$ref": "#/components/schemas/User" },
+          "product": { "$ref": "#/components/schemas/Product" },
+          "product_price": { "type": "number", "format": "decimal" },
+          "shipping_cost": { "type": "number", "format": "decimal" },
+          "service_fee": { "type": "number", "format": "decimal" },
+          "total_amount": { "type": "number", "format": "decimal" },
+          "status": { "type": "string", "enum": ["pending_payment", "paid", "processing", "shipped", "delivered", "completed", "cancelled", "disputed", "refunded"] },
+          "notes": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "OrderRequest": {
+        "type": "object",
+        "required": ["product_id", "shipping_address_id", "courier", "service"],
+        "properties": {
+          "product_id": { "type": "string", "format": "ulid" },
+          "shipping_address_id": { "type": "string", "format": "ulid" },
+          "courier": { "type": "string", "enum": ["jne", "jnt", "sicepat", "anteraja"] },
+          "service": { "type": "string", "example": "REG" },
+          "notes": { "type": "string", "maxLength": 500, "nullable": true }
+        }
+      },
+      "ProductRequest": {
+        "type": "object",
+        "required": ["category_id", "title", "description", "size", "condition", "price", "weight_grams"],
+        "properties": {
+          "category_id": { "type": "string" },
+          "brand_id": { "type": "string", "nullable": true },
+          "title": { "type": "string", "maxLength": 200, "example": "Kemeja Flannel Uniqlo Size L" },
+          "description": { "type": "string", "example": "Kondisi like new, baru dipakai 2x" },
+          "size": { "type": "string", "maxLength": 10, "example": "L" },
+          "condition": { "type": "string", "enum": ["new_with_tag", "like_new", "good", "fair"] },
+          "color": { "type": "string", "maxLength": 50, "nullable": true, "example": "Navy" },
+          "price": { "type": "number", "minimum": 1000, "example": 150000 },
+          "weight_grams": { "type": "integer", "minimum": 1, "example": 300 },
+          "images[]": { "type": "array", "items": { "type": "string", "format": "binary" } }
+        }
+      },
+      "PaginatedProducts": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } },
+          "links": { "type": "object", "properties": { "first": { "type": "string" }, "last": { "type": "string" }, "prev": { "type": "string", "nullable": true }, "next": { "type": "string", "nullable": true } } },
+          "meta": { "type": "object", "properties": { "current_page": { "type": "integer" }, "last_page": { "type": "integer" }, "per_page": { "type": "integer" }, "total": { "type": "integer" } } }
+        }
+      }
+    },
+    "responses": {
+      "MessageResponse": {
+        "description": "Success message",
+        "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string" } } } } }
+      },
+      "ValidationError": {
+        "description": "Validation error",
+        "content": { "application/json": { "schema": { "type": "object", "properties": { "message": { "type": "string" }, "errors": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } } } } } }
+      }
+    }
+  }
+}
