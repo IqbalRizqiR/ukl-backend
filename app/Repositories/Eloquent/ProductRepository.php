@@ -14,7 +14,8 @@ class ProductRepository implements ProductRepositoryInterface
 {
     public function __construct(
         protected Product $model
-    ) {}
+    ) {
+    }
 
     public function findById(string $id): ?Product
     {
@@ -73,7 +74,7 @@ class ProductRepository implements ProductRepositoryInterface
     {
         $product = $this->model->find($id);
 
-        if (! $product) {
+        if (!$product) {
             return null;
         }
 
@@ -86,22 +87,33 @@ class ProductRepository implements ProductRepositoryInterface
     {
         $product = $this->model->find($id);
 
-        if (! $product) {
+        if (!$product) {
             return false;
         }
 
         return (bool) $product->delete();
     }
 
-    public function getBySeller(string $sellerId, int $perPage = 15): LengthAwarePaginator
+    public function getBySeller(string $sellerId, int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        return $this->model
+        $query = $this->model
             ->with(['category', 'brand', 'images'])
-            ->where('seller_id', $sellerId)
-            ->latest()
-            ->paginate($perPage);
-    }
+            ->where('seller_id', $sellerId);
 
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['condition'])) {
+            $query->where('condition', $filters['condition']);
+        }
+
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortDir = $filters['sort_dir'] ?? 'desc';
+        $query->orderBy($sortBy, $sortDir);
+
+        return $query->paginate($perPage);
+    }
     public function getActive(int $perPage = 15): LengthAwarePaginator
     {
         return $this->model
@@ -118,7 +130,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->where('status', ProductStatus::Active)
             ->where(function ($q) use ($query) {
                 $q->where('title', 'ilike', "%{$query}%")
-                  ->orWhere('description', 'ilike', "%{$query}%");
+                    ->orWhere('description', 'ilike', "%{$query}%");
             });
 
         if (isset($filters['category_id'])) {

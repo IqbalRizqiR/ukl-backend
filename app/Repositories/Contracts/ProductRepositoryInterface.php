@@ -22,7 +22,7 @@ interface ProductRepositoryInterface
 
     public function delete(string $id): bool;
 
-    public function getBySeller(string $sellerId, int $perPage = 15): LengthAwarePaginator;
+    public function getBySeller(string $sellerId, int $perPage = 15, array $filters = []): LengthAwarePaginator;
 
     public function getActive(int $perPage = 15): LengthAwarePaginator;
 

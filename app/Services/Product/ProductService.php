@@ -14,7 +14,8 @@ final class ProductService
 {
     public function __construct(
         private readonly ProductRepositoryInterface $productRepository,
-    ) {}
+    ) {
+    }
 
     /**
      * List products with optional filters.
@@ -23,10 +24,13 @@ final class ProductService
      * @param  int  $perPage
      * @return LengthAwarePaginator
      */
-    public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function list(array $filters = []): LengthAwarePaginator
     {
+        $perPage = (int) ($filters['per_page'] ?? 15);
         return $this->productRepository->paginate($perPage, $filters);
     }
+
+
 
     /**
      * Show a single product by slug, incrementing view counter.
@@ -40,7 +44,7 @@ final class ProductService
     {
         $product = $this->productRepository->findBySlug($slug);
 
-        if (! $product) {
+        if (!$product) {
             throw new ModelNotFoundException('Produk tidak ditemukan.');
         }
 
@@ -79,7 +83,7 @@ final class ProductService
     {
         $product = $this->productRepository->findById($productId);
 
-        if (! $product) {
+        if (!$product) {
             throw new ModelNotFoundException('Produk tidak ditemukan.');
         }
 
@@ -106,7 +110,7 @@ final class ProductService
     {
         $product = $this->productRepository->findById($productId);
 
-        if (! $product) {
+        if (!$product) {
             throw new ModelNotFoundException('Produk tidak ditemukan.');
         }
 
@@ -125,8 +129,9 @@ final class ProductService
      * @param  int  $perPage
      * @return LengthAwarePaginator
      */
-    public function getSellerProducts(string $sellerId, array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function getSellerProducts(string $sellerId, array $filters = []): LengthAwarePaginator
     {
-        return $this->productRepository->getBySeller($sellerId, $perPage);
+        $perPage = (int) ($filters['per_page'] ?? 15);
+        return $this->productRepository->getBySeller($sellerId, $perPage, $filters);
     }
 }
