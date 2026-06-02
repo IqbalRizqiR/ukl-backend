@@ -39,7 +39,7 @@ class ProductRepository implements ProductRepositoryInterface
             'brand',
             'images',
             'seller.defaultAddress',
-        ])->whereRelation('bookmarks', 'user_id', auth()->id());
+        ]);
 
         if (isset($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
@@ -75,6 +75,10 @@ class ProductRepository implements ProductRepositoryInterface
 
         $query->whereHas('seller.defaultAddress', function ($q) {
             $q->whereNotNull('city_id');
+        });
+
+        $query->whereHas('bookmarks', function ($q) {
+            $q->where('user_id', auth()->id());
         });
 
         $sortBy = $filters['sort_by'] ?? 'created_at';
