@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 
 class ProductRepository implements ProductRepositoryInterface
 {
@@ -30,7 +31,7 @@ class ProductRepository implements ProductRepositoryInterface
      */
     private function withBookmarkStatus($query)
     {
-        if (auth()->check()) {
+        if (Auth::id()) {
             $query->withExists(['currentUserBookmark as is_bookmarked']);
         }
 
@@ -84,7 +85,7 @@ class ProductRepository implements ProductRepositoryInterface
             $query->where('status', ProductStatus::Active);
         }
 
-        if (isset($filters['is_bookmarked']) && auth()->check()) {
+        if (isset($filters['is_bookmarked']) && Auth::check()) {
             $query->whereHas('currentUserBookmark');
         }
 
