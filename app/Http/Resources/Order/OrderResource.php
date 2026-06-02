@@ -26,8 +26,6 @@ class OrderResource extends JsonResource
             'seller' => new UserResource($this->whenLoaded('seller')),
             'product' => new ProductResource($this->whenLoaded('product')),
             'shipping_address' => new AddressResource($this->whenLoaded('shippingAddress')),
-            'courier' => $this->courier,
-            'courier_service' => $this->courier_service,
             'product_price' => $this->product_price,
             'shipping_cost' => $this->shipping_cost,
             'service_fee' => $this->service_fee,

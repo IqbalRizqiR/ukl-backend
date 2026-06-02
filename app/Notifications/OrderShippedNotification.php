@@ -37,8 +37,8 @@ class OrderShippedNotification extends Notification implements ShouldQueue
             'order_id' => $this->order->id,
             'order_number' => $this->order->order_number,
             'product_id' => $this->order->product_id,
-            'tracking_number' => $this->order->tracking_number,
-            'shipping_courier' => $this->order->shipping_courier,
+            'tracking_number' => $this->order->shipment->tracking_number,
+            'shipping_courier' => $this->order->shipment->courier,
             'seller_id' => $this->order->seller_id,
         ];
     }

@@ -13,6 +13,7 @@ use App\Exceptions\OrderException;
 use App\Models\EscrowTransaction;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Shipment;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -66,14 +67,22 @@ final class OrderService
                 'seller_id' => $product->seller_id,
                 'product_id' => $product->id,
                 'shipping_address_id' => $data['shipping_address_id'],
-                'courier' => $data['courier'] ?? 'jne',
-                'courier_service' => $data['service'] ?? 'REG',
                 'product_price' => $productPrice,
                 'shipping_cost' => $shippingCost,
                 'service_fee' => $serviceFee,
                 'total_amount' => $totalAmount,
                 'status' => OrderStatus::PendingPayment,
                 'notes' => $data['notes'] ?? null,
+            ]);
+
+            Shipment::create([
+                'order_id' => $order->id,
+                'courier' => $data['courier'],
+                'service' => $data['service'],
+                'shipping_cost' => $shippingCost,
+                'weight_grams' => $product->weight_grams ?? null,
+                'origin_city_id' => $product->seller->defaultAddress?->city_id,
+                'destination_city_id' => $order->shippingAddress->city_id,
             ]);
 
             EscrowTransaction::create([
