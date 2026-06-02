@@ -15,7 +15,6 @@ class DatabaseSeeder extends Seeder
             RajaOngkirSeeder::class,
             UserSeeder::class,
             CategorySeeder::class,
-            BrandSeeder::class,
             UserAddressSeeder::class,
             UserBankAccountSeeder::class,
             ProductSeeder::class,

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->foreignUlid('seller_id')->constrained('users')->cascadeOnDelete();
             $table->foreignUlid('category_id')->constrained('categories')->cascadeOnDelete();
-            $table->foreignUlid('brand_id')->nullable()->constrained('brands')->nullOnDelete();
+            $table->string('brand', 100)->nullable();
             $table->string('title', 200);
             $table->string('slug', 220)->unique();
             $table->text('description');
@@ -31,7 +31,6 @@ return new class extends Migration
 
             $table->index('seller_id');
             $table->index('category_id');
-            $table->index('brand_id');
             $table->index('status');
             $table->index(['status', 'created_at']);
             $table->fullText(['title', 'description']);

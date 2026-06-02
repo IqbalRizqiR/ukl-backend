@@ -20,8 +20,8 @@ final class ProductService
     /**
      * List products with optional filters.
      *
+     *
      * @param  array<string, mixed>  $filters
-     * @param  int  $perPage
      * @return LengthAwarePaginator
      */
     public function list(array $filters = []): LengthAwarePaginator
@@ -64,8 +64,26 @@ final class ProductService
     {
         $data['seller_id'] = $sellerId;
         $data['status'] = ProductStatus::Active;
+        
+        $images = $data['images'] ?? [];
+        unset($data['images']);
 
-        return $this->productRepository->create($data);
+        $product = $this->productRepository->create($data);
+        
+        if (is_array($images) && count($images) > 0) {
+            $position = 0;
+            foreach ($images as $url) {
+                if (is_string($url)) {
+                    \App\Models\ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_url' => $url,
+                        'position' => $position++,
+                    ]);
+                }
+            }
+        }
+
+        return $product->fresh(['images']) ?? $product;
     }
 
     /**
@@ -124,9 +142,9 @@ final class ProductService
     /**
      * Get products belonging to a specific seller.
      *
+     *
      * @param  string  $sellerId
      * @param  array<string, mixed>  $filters
-     * @param  int  $perPage
      * @return LengthAwarePaginator
      */
     public function getSellerProducts(string $sellerId, array $filters = []): LengthAwarePaginator
