@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Product;
 
-use App\Http\Resources\Discovery\BrandResource;
 use App\Http\Resources\Discovery\CategoryResource;
 use App\Http\Resources\User\UserResource;
 use Illuminate\Http\Request;
@@ -18,7 +17,7 @@ class ProductResource extends JsonResource
             'id' => $this->id,
             'seller' => new UserResource($this->whenLoaded('seller')),
             'category' => new CategoryResource($this->whenLoaded('category')),
-            'brand' => new BrandResource($this->whenLoaded('brand')),
+            'brand' => $this->brand,
             'title' => $this->title,
             'slug' => $this->slug,
             'description' => $this->description,
