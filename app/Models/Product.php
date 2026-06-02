@@ -14,8 +14,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
 
 #[Guarded([])]
 #[Hidden(['deleted_at'])]
@@ -58,6 +58,15 @@ class Product extends Model
     public function bookmarks(): HasMany
     {
         return $this->hasMany(Bookmark::class);
+    }
+
+    /**
+     * Scoped relationship: bookmark for a specific user.
+     * Use with withExists/withCount: ->withExists(['currentUserBookmark as is_bookmarked'])
+     */
+    public function currentUserBookmark(): HasOne
+    {
+        return $this->hasOne(Bookmark::class)->where('user_id', auth()->id());
     }
 
     public function orders(): HasMany

@@ -30,10 +30,7 @@ class ProductResource extends JsonResource
             'status' => $this->status,
             'views_count' => $this->views_count,
             'images' => ProductImageResource::collection($this->whenLoaded('images')),
-            'is_bookmarked' => $this->when(
-                $request->user() !== null,
-                fn () => $this->bookmarks?->contains('user_id', $request->user()?->id) ?? false
-            ),
+            'is_bookmarked' => (bool) $this->resource->getAttribute('is_bookmarked'),
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

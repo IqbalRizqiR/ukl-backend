@@ -17,38 +17,49 @@ class ProductRepository implements ProductRepositoryInterface
     ) {
     }
 
+    /**
+     * Base eager-load relations for product queries.
+     */
+    private function baseWith(): array
+    {
+        return ['seller', 'category', 'brand', 'images'];
+    }
+
+    /**
+     * Apply bookmark exists check for the current authenticated user.
+     */
+    private function withBookmarkStatus($query)
+    {
+        if (auth()->check()) {
+            $query->withExists(['currentUserBookmark as is_bookmarked']);
+        }
+
+        return $query;
+    }
+
     public function findById(string $id): ?Product
     {
-        return $this->model->with(['seller', 'bookmarks', 'category', 'brand', 'images', 'seller.defaultAddress',])->find($id);
+        $query = $this->model->with($this->baseWith());
+        $this->withBookmarkStatus($query);
+
+        return $query->find($id);
     }
 
     public function findBySlug(string $slug): ?Product
     {
-        return $this->model
-            ->with(['seller', 'category', 'brand', 'bookmarks', 'images', 'seller.defaultAddress',])
-            ->where('slug', $slug)
-            ->first();
+        $query = $this->model->with($this->baseWith());
+        $this->withBookmarkStatus($query);
+
+        return $query->where('slug', $slug)->first();
     }
 
     public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        $query = $this->model->with([
-            'bookmarks',
-            'seller',
-            'category',
-            'brand',
-            'images',
-            'seller.defaultAddress',
-        ]);
+        $query = $this->model->with($this->baseWith());
+        $this->withBookmarkStatus($query);
 
         if (isset($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
-        }
-
-        if (isset($filters['is_bookmarked'])) {
-            $query->whereHas('bookmarks', function ($q) {
-                $q->where('user_id', auth()->id());
-            });
         }
 
         if (isset($filters['brand_id'])) {
@@ -73,13 +84,9 @@ class ProductRepository implements ProductRepositoryInterface
             $query->where('status', ProductStatus::Active);
         }
 
-        $query->whereHas('seller.defaultAddress', function ($q) {
-            $q->whereNotNull('city_id');
-        });
-
-        // $query->whereHas('bookmarks', function ($q) {
-        //     $q->where('user_id', auth()->id());
-        // });
+        if (isset($filters['is_bookmarked']) && auth()->check()) {
+            $query->whereHas('currentUserBookmark');
+        }
 
         $sortBy = $filters['sort_by'] ?? 'created_at';
         $sortDir = $filters['sort_dir'] ?? 'desc';
@@ -103,7 +110,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         $product->update($data);
 
-        return $product->fresh(['seller', 'category', 'brand', 'images']);
+        return $product->fresh($this->baseWith());
     }
 
     public function delete(string $id): bool
@@ -122,6 +129,7 @@ class ProductRepository implements ProductRepositoryInterface
         $query = $this->model
             ->with(['category', 'brand', 'images'])
             ->where('seller_id', $sellerId);
+        $this->withBookmarkStatus($query);
 
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -137,30 +145,28 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $query->paginate($perPage);
     }
+
     public function getActive(int $perPage = 15): LengthAwarePaginator
     {
-        return $this->model
-            ->with(['seller', 'bookmarks', 'category', 'brand', 'images'])
+        $query = $this->model
+            ->with($this->baseWith())
             ->where('status', ProductStatus::Active)
-            ->whereHas('seller.defaultAddress', function ($q) {
-                $q->whereNotNull('city_id');
-            })
-            ->latest()
-            ->paginate($perPage);
+            ->latest();
+        $this->withBookmarkStatus($query);
+
+        return $query->paginate($perPage);
     }
 
     public function search(string $query, array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $builder = $this->model
-            ->with(['seller', 'bookmarks', 'category', 'brand', 'images'])
+            ->with($this->baseWith())
             ->where('status', ProductStatus::Active)
-            ->whereHas('seller.defaultAddress', function ($q) {
-                $q->whereNotNull('city_id');
-            })
             ->where(function ($q) use ($query) {
                 $q->where('title', 'ilike', "%{$query}%")
                     ->orWhere('description', 'ilike', "%{$query}%");
             });
+        $this->withBookmarkStatus($builder);
 
         if (isset($filters['category_id'])) {
             $builder->where('category_id', $filters['category_id']);
