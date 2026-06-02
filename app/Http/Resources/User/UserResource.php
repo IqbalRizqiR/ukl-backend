@@ -27,6 +27,7 @@ class UserResource extends JsonResource
             'rating_avg' => $this->rating_avg,
             'rating_count' => $this->rating_count,
             'created_at' => $this->created_at?->toISOString(),
+            'default_address' => new AddressResource($this->whenLoaded('defaultAddress')), // ✅
         ];
     }
 }

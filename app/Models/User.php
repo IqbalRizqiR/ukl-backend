@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Guarded([])]
 #[Hidden(['password', 'remember_token', 'ktp_number', 'deleted_at'])]
@@ -47,6 +48,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->hasMany(UserAddress::class);
     }
 
+
+    public function defaultAddress(): HasOne
+    {
+        return $this->hasOne(UserAddress::class)->where('is_default', true)->latestOfMany();
+    }
     public function bankAccounts(): HasMany
     {
         return $this->hasMany(UserBankAccount::class);

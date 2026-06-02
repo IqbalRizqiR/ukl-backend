@@ -11,7 +11,7 @@ Route::prefix('v1/auth')->group(function () {
 
     // Public auth routes
     Route::post('/register', [RegisterController::class, 'register']);
-    Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/login', [LoginController::class, 'login'])->name('login');
     Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword']);
     Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 

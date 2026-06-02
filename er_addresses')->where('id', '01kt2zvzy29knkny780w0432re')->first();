@@ -1,0 +1,20 @@
+[90m= [39m[34;4mIlluminate\Support\Collection[39;24m {#8292
+    [34mall[39m: [
+      {#8294
+        +"[1mid[22m": [35m32[39m,
+        +"[1mprovince_id[22m": [35m3[39m,
+        +"[1mname[22m": [32m"[39m[32mHULU SUNGAI SELATAN[39m[32m"[39m,
+        +"[1mdeleted_at[22m": [36mnull[39m,
+        +"[1mcreated_at[22m": [32m"[39m[32m2026-06-01 23:28:33[39m[32m"[39m,
+        +"[1mupdated_at[22m": [32m"[39m[32m2026-06-01 23:28:33[39m[32m"[39m,
+      },
+      {#8295
+        +"[1mid[22m": [35m534[39m,
+        +"[1mprovince_id[22m": [35m7[39m,
+        +"[1mname[22m": [32m"[39m[32mSAMARINDA[39m[32m"[39m,
+        +"[1mdeleted_at[22m": [36mnull[39m,
+        +"[1mcreated_at[22m": [32m"[39m[32m2026-06-01 23:28:35[39m[32m"[39m,
+        +"[1mupdated_at[22m": [32m"[39m[32m2026-06-01 23:28:35[39m[32m"[39m,
+      },
+    ],
+  }

@@ -69,7 +69,7 @@ class ProductSeeder extends Seeder
             for ($j = 0; $j < $imgCount; $j++) {
                 ProductImage::create([
                     'product_id' => $product->id,
-                    'image_url'  => "https://picsum.photos/seed/{$slug}-{$j}/600/800",
+                    'image_url'  => "",
                     'position'   => $j,
                 ]);
             }

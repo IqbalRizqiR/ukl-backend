@@ -11,10 +11,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/search', [SearchController::class, 'search']);
     Route::get('/provinces', function() {
         $provinces = \App\Models\Province::all(['id', 'name']);
-        return response()->json($provinces);
+        return response()->json(['data' => $provinces]);
     });
     Route::get('/cities', function() {
         $cities = \App\Models\City::all(['id', 'province_id', 'name']);
-        return response()->json($cities);
+        return response()->json(['data' => $cities]);
     });
 });
