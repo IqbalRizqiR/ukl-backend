@@ -9,14 +9,13 @@ use App\Enums\ProductStatus;
 use App\Models\Concerns\HasAuditLog;
 use Illuminate\Database\Eloquent\Attributes\Guarded;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
 
 #[Guarded([])]
 #[Hidden(['deleted_at'])]
@@ -36,6 +35,8 @@ class Product extends Model
         ];
     }
 
+    // ─── Relationships ───────────────────────────────────────────────
+
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
@@ -44,6 +45,11 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
     }
 
     public function images(): HasMany
@@ -56,13 +62,26 @@ class Product extends Model
         return $this->hasMany(Bookmark::class);
     }
 
-    public function currentUserBookmark(): HasOne
-    {
-        return $this->hasOne(Bookmark::class)->where('user_id', Auth::id());
-    }
-
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    // ─── Scopes ──────────────────────────────────────────────────────
+
+    /**
+     * Add `is_bookmarked` boolean column for a specific user.
+     * Uses a raw subquery — works reliably regardless of auth state.
+     */
+    public function scopeWithBookmarkStatus(Builder $query, ?string $userId): Builder
+    {
+        if ($userId) {
+            return $query->selectRaw(
+                '*, EXISTS(SELECT 1 FROM bookmarks WHERE bookmarks.product_id = products.id AND bookmarks.user_id = ? AND bookmarks.deleted_at IS NULL) as is_bookmarked',
+                [$userId]
+            );
+        }
+
+        return $query->selectRaw('*, FALSE as is_bookmarked');
     }
 }
