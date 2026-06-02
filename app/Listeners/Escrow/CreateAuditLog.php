@@ -25,7 +25,7 @@ class CreateAuditLog implements ShouldQueue
         AuditLog::create([
             'auditable_type' => $escrow->getMorphClass(),
             'auditable_id' => $escrow->id,
-            'event' => $eventType,
+            'action' => $eventType,
             'old_values' => [],
             'new_values' => [
                 'status' => $escrow->status,
