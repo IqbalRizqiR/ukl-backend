@@ -12,8 +12,8 @@ Route::prefix('v1/auth')->group(function () {
     // Public auth routes
     Route::post('/register', [RegisterController::class, 'register']);
     Route::post('/login', [LoginController::class, 'login'])->name('login');
-    Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword']);
-    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+    Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])->name('password.forgot');
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
 
     // Email verification (signed URL from email, no auth needed)
     Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
