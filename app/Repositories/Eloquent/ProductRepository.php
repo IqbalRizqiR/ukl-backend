@@ -37,6 +37,7 @@ class ProductRepository implements ProductRepositoryInterface
             'category',
             'brand',
             'images',
+            'bookmarks',
             'seller.defaultAddress',
         ]);
 
