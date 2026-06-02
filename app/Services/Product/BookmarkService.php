@@ -6,6 +6,7 @@ namespace App\Services\Product;
 
 use App\Models\Bookmark;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 final class BookmarkService
 {
@@ -45,6 +46,10 @@ final class BookmarkService
      */
     public function getUserBookmarks(string $userId, int $perPage = 15)
     {
-        return Bookmark::all();
+        return DB::table('bookmarks')
+            ->where('user_id', $userId)
+            ->join('products', 'bookmarks.product_id', '=', 'products.id')
+            ->select('products.*')
+            ->paginate($perPage);
     }
 }
