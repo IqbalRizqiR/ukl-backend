@@ -19,19 +19,27 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function findById(string $id): ?Product
     {
-        return $this->model->with(['seller', 'category', 'brand', 'images', 'seller.defaultAddress',])->find($id);
+        return $this->model->with(['seller', 'bookmarks', 'category', 'brand', 'images', 'seller.defaultAddress',])->find($id);
     }
 
     public function findBySlug(string $slug): ?Product
     {
         return $this->model
-            ->with(['seller', 'category', 'brand', 'images', 'seller.defaultAddress',])
+            ->with(['seller', 'category', 'brand', 'bookmarks', 'images', 'seller.defaultAddress',])
             ->where('slug', $slug)
             ->first();
     }
 
     public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
+        dd($this->model->with([
+            'bookmarks',
+            'seller',
+            'category',
+            'brand',
+            'images',
+            'seller.defaultAddress',
+        ])->all());
         $query = $this->model->with([
             'bookmarks',
             'seller',
@@ -136,7 +144,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function getActive(int $perPage = 15): LengthAwarePaginator
     {
         return $this->model
-            ->with(['seller', 'category', 'brand', 'images'])
+            ->with(['seller', 'bookmarks', 'category', 'brand', 'images'])
             ->where('status', ProductStatus::Active)
             ->whereHas('seller.defaultAddress', function ($q) {
                 $q->whereNotNull('city_id');
@@ -148,7 +156,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function search(string $query, array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $builder = $this->model
-            ->with(['seller', 'category', 'brand', 'images'])
+            ->with(['seller', 'bookmarks', 'category', 'brand', 'images'])
             ->where('status', ProductStatus::Active)
             ->whereHas('seller.defaultAddress', function ($q) {
                 $q->whereNotNull('city_id');
