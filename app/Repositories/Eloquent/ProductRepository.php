@@ -77,9 +77,9 @@ class ProductRepository implements ProductRepositoryInterface
             $q->whereNotNull('city_id');
         });
 
-        $query->whereHas('bookmarks', function ($q) {
-            $q->where('user_id', auth()->id());
-        });
+        // $query->whereHas('bookmarks', function ($q) {
+        //     $q->where('user_id', auth()->id());
+        // });
 
         $sortBy = $filters['sort_by'] ?? 'created_at';
         $sortDir = $filters['sort_dir'] ?? 'desc';
