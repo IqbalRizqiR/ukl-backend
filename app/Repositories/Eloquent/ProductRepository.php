@@ -19,13 +19,13 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function findById(string $id): ?Product
     {
-        return $this->model->with(['seller', 'bookmarks', 'category', 'images', 'seller.defaultAddress',])->find($id);
+        return $this->model->with(['seller', 'category', 'images', 'seller.defaultAddress',])->find($id);
     }
 
     public function findBySlug(string $slug): ?Product
     {
         return $this->model
-            ->with(['seller', 'category', 'bookmarks', 'images', 'seller.defaultAddress',])
+            ->with(['seller', 'category', 'images', 'seller.defaultAddress',])
             ->where('slug', $slug)
             ->first();
     }
@@ -33,12 +33,13 @@ class ProductRepository implements ProductRepositoryInterface
     public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $query = $this->model->with([
-            'bookmarks',
             'seller',
             'category',
             'images',
             'seller.defaultAddress',
-        ]);
+        ])->withBookmarkStatus(auth('sanctum')->id());
+
+
 
         if (isset($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
@@ -92,7 +93,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         $product->update($data);
 
-        return $product->fresh(['seller', 'category', 'bookmarks', 'images']);
+        return $product->fresh(['seller', 'category', 'images']);
     }
 
     public function delete(string $id): bool
@@ -109,7 +110,8 @@ class ProductRepository implements ProductRepositoryInterface
     public function getBySeller(string $sellerId, int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $query = $this->model
-            ->with(['category', 'bookmarks', 'images'])
+            ->with(['category', 'images'])
+            ->withBookmarkStatus(auth('sanctum')->id())
             ->where('seller_id', $sellerId);
 
         if (isset($filters['status'])) {
@@ -129,7 +131,8 @@ class ProductRepository implements ProductRepositoryInterface
     public function getActive(int $perPage = 15): LengthAwarePaginator
     {
         return $this->model
-            ->with(['seller', 'bookmarks', 'category', 'images'])
+            ->with(['seller', 'category', 'images'])
+            ->withBookmarkStatus(auth('sanctum')->id())
             ->where('status', ProductStatus::Active)
             ->whereHas('seller.defaultAddress', function ($q) {
                 $q->whereNotNull('city_id');
@@ -141,7 +144,8 @@ class ProductRepository implements ProductRepositoryInterface
     public function search(string $query, array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $builder = $this->model
-            ->with(['seller', 'bookmarks', 'category', 'images'])
+            ->with(['seller', 'category', 'images'])
+            ->withBookmarkStatus(auth('sanctum')->id())
             ->where('status', ProductStatus::Active)
             ->whereHas('seller.defaultAddress', function ($q) {
                 $q->whereNotNull('city_id');
