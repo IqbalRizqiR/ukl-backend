@@ -33,11 +33,12 @@ class AppServiceProvider extends ServiceProvider
                 ]
             );
             // Extract query parameters (expires, signature)
-            $parsedUrl = parse_url($backendUrl);
-            $queryString = $parsedUrl['query'] ?? '';
+            $parseQueryString = parse_url($backendUrl, PHP_URL_QUERY);
+            $parsedUrl = array_map('trim', explode('/' , $backendUrl));
 
             // Route to your frontend landing page (e.g., Next.js, Vue, Nuxt)
-            $frontendTargetUrl = config('app.frontend_url') . '/verify-email?' . $queryString;
+            $prefixHashUrl = '?id=' . $parsedUrl[8] . '&hash=' . $parsedUrl[9] . '&' . $parseQueryString;
+            $frontendTargetUrl = config('app.frontend_url') . '/verify-email' . $prefixHashUrl;
 
             return $frontendTargetUrl;
         }));
