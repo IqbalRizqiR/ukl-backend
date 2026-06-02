@@ -75,16 +75,6 @@ final class OrderService
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            Shipment::create([
-                'order_id' => $order->id,
-                'courier' => $data['courier'],
-                'service' => $data['service'],
-                'shipping_cost' => $shippingCost,
-                'weight_grams' => $product->weight_grams ?? null,
-                'origin_city_id' => $product->seller->defaultAddress?->city_id,
-                'destination_city_id' => $order->shippingAddress->city_id,
-            ]);
-
             EscrowTransaction::create([
                 'order_id' => $order->id,
                 'amount' => $totalAmount,
