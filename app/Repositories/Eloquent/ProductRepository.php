@@ -26,10 +26,12 @@ class ProductRepository implements ProductRepositoryInterface
 
     /**
      * Get the current authenticated user ID (or null).
+     * Uses 'sanctum' guard explicitly so it resolves Bearer tokens
+     * even on public routes without auth:sanctum middleware.
      */
     private function currentUserId(): ?string
     {
-        return auth()->id();
+        return auth('sanctum')->id();
     }
 
     public function findById(string $id): ?Product
