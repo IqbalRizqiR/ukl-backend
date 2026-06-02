@@ -46,7 +46,8 @@ final class BookmarkService
      */
     public function getUserBookmarks(string $userId, int $perPage = 15)
     {
-        return DB::table('bookmarks')
-            ->get();
+        return Bookmark::with('product.seller', 'product.category', 'product.brand', 'product.images')
+            ->where('user_id', $userId)
+            ->paginate($perPage);
     }
 }
