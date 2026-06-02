@@ -21,7 +21,7 @@ final class ProductModerationService
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $query = Product::query()
-            ->with(['seller', 'category', 'brand', 'images'])
+            ->with(['seller', 'category', 'images'])
             ->orderByDesc('created_at');
 
         if (! empty($filters['status'])) {

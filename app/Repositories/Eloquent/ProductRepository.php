@@ -21,7 +21,7 @@ class ProductRepository implements ProductRepositoryInterface
      */
     private function baseWith(): array
     {
-        return ['seller', 'category', 'brand', 'images'];
+        return ['seller', 'category', 'images'];
     }
 
     /**
@@ -59,8 +59,8 @@ class ProductRepository implements ProductRepositoryInterface
             $query->where('category_id', $filters['category_id']);
         }
 
-        if (isset($filters['brand_id'])) {
-            $query->where('brand_id', $filters['brand_id']);
+        if (isset($filters['brand'])) {
+            $query->where('brand', $filters['brand']);
         }
 
         if (isset($filters['condition'])) {
@@ -170,8 +170,8 @@ class ProductRepository implements ProductRepositoryInterface
             $builder->where('category_id', $filters['category_id']);
         }
 
-        if (isset($filters['brand_id'])) {
-            $builder->where('brand_id', $filters['brand_id']);
+        if (isset($filters['brand'])) {
+            $builder->where('brand', $filters['brand']);
         }
 
         if (isset($filters['condition'])) {
