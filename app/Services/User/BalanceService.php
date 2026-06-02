@@ -56,10 +56,12 @@ final class BalanceService
                 'user_id' => $userId,
                 'auditable_type' => User::class,
                 'auditable_id' => $userId,
-                'event' => 'balance_credit',
+                'action' => 'balance_credit',
                 'old_values' => ['balance' => $oldBalance],
-                'new_values' => ['balance' => $newBalance],
-                'description' => $description,
+                'new_values' => [
+                    'balance' => $newBalance,
+                    'description' => $description,
+                ],
             ]);
 
             return $user->refresh();
@@ -99,10 +101,12 @@ final class BalanceService
                 'user_id' => $userId,
                 'auditable_type' => User::class,
                 'auditable_id' => $userId,
-                'event' => 'balance_debit',
+                'action' => 'balance_debit',
                 'old_values' => ['balance' => $oldBalance],
-                'new_values' => ['balance' => $newBalance],
-                'description' => $description,
+                'new_values' => [
+                    'balance' => $newBalance,
+                    'description' => $description,
+                ],
             ]);
 
             return $user->refresh();
