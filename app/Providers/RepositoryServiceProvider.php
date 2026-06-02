@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Repositories\Contracts\BrandRepositoryInterface;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
 use App\Repositories\Contracts\ConversationRepositoryInterface;
 use App\Repositories\Contracts\DisputeRepositoryInterface;
@@ -55,7 +54,6 @@ class RepositoryServiceProvider extends ServiceProvider
         DisputeRepositoryInterface::class => DisputeRepository::class,
         NotificationRepositoryInterface::class => NotificationRepository::class,
         CategoryRepositoryInterface::class => CategoryRepository::class,
-        BrandRepositoryInterface::class => BrandRepository::class,
     ];
 
     /**

@@ -23,7 +23,7 @@ class ProductRepository implements ProductRepositoryInterface
      */
     private function baseWith(): array
     {
-        return ['seller', 'category', 'brand', 'images'];
+        return ['seller', 'category', 'images'];
     }
 
     /**
@@ -128,7 +128,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function getBySeller(string $sellerId, int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $query = $this->model
-            ->with(['category', 'brand', 'images'])
+            ->with(['category', 'images'])
             ->where('seller_id', $sellerId);
         $this->withBookmarkStatus($query);
 
