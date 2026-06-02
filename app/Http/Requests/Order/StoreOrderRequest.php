@@ -25,6 +25,7 @@ class StoreOrderRequest extends FormRequest
             'shipping_address_id' => ['required', 'exists:user_addresses,id'],
             'courier' => ['required', new Enum(ShipmentCourier::class)],
             'service' => ['required', 'string'],
+            'shipping_cost' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:500'],
         ];
     }

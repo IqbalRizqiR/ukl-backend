@@ -33,14 +33,20 @@ final class OrderController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $orders = $this->orderService->getByBuyer($request->user()->id);
+        $orders = $this->orderService->getByBuyer(
+            $request->user()->id,
+            (int) $request->query('per_page', '15')
+        );
 
         return OrderResource::collection($orders);
     }
 
     public function sellerOrders(Request $request): AnonymousResourceCollection
     {
-        $orders = $this->orderService->getBySeller($request->user()->id);
+        $orders = $this->orderService->getBySeller(
+            $request->user()->id,
+            (int) $request->query('per_page', '15')
+        );
 
         return OrderResource::collection($orders);
     }
@@ -59,9 +65,8 @@ final class OrderController extends Controller
         ]);
 
         $order = $this->orderService->cancel(
-            $request->user()->id,
             $orderId,
-            $request->input('reason'),
+            $request->user()->id
         );
 
         return response()->json([

@@ -41,10 +41,14 @@ final class ShipmentService
 
             $shipment = $this->shipmentRepository->create([
                 'order_id' => $orderId,
-                'courier' => $data['courier'],
+                'courier' => $data['courier'] ?? $order->courier,
+                'service' => $data['service'] ?? $order->courier_service ?? 'REG',
                 'tracking_number' => $data['tracking_number'] ?? null,
                 'shipping_cost' => $order->shipping_cost,
-                'estimated_delivery_at' => $data['estimated_delivery_at'] ?? null,
+                'weight_grams' => 1000, // Standard flat weight for MVP
+                'origin_city_id' => $order->seller->defaultAddress?->city_id ?? throw new \Exception('Seller has no origin city.'),
+                'destination_city_id' => $order->shippingAddress?->city_id ?? throw new \Exception('No shipping address provided.'),
+                'estimated_delivery_at' => $data['estimated_delivery_at'] ?? now()->addDays(3),
                 'shipped_at' => now(),
             ]);
 
