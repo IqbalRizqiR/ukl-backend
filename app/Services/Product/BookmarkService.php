@@ -48,8 +48,6 @@ final class BookmarkService
     {
         return DB::table('bookmarks')
             ->where('user_id', $userId)
-            ->join('products', 'bookmarks.product_id', '=', 'products.id')
-            ->select('products.*')
             ->paginate($perPage);
     }
 }
