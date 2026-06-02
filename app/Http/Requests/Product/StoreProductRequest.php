@@ -22,7 +22,7 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'category_id' => ['required', 'exists:categories,id'],
-            'brand_id' => ['nullable', 'exists:brands,id'],
+            'brand' => ['nullable', 'string', 'max:100'],
             'title' => ['required', 'string', 'max:200'],
             'description' => ['required', 'string'],
             'size' => ['required', 'string', 'max:10'],
@@ -31,7 +31,7 @@ class StoreProductRequest extends FormRequest
             'price' => ['required', 'numeric', 'min:1000'],
             'weight_grams' => ['required', 'integer', 'min:1'],
             'images' => ['required', 'array', 'max:5'],
-            'images.*' => ['image', 'max:2048'],
+            'images.*' => ['string', 'url', 'max:2048'],
         ];
     }
 }

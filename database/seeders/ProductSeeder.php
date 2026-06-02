@@ -6,7 +6,6 @@ namespace Database\Seeders;
 
 use App\Enums\ProductCondition;
 use App\Enums\ProductStatus;
-use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
@@ -20,8 +19,6 @@ class ProductSeeder extends Seeder
     {
         $sellers    = User::where('is_seller', true)->get();
         $categories = Category::all();
-        $brands     = Brand::all();
-
         $items = [
             ['title' => 'Kemeja Flanel Uniqlo Merah Hitam',        'desc' => 'Kemeja flanel lengan panjang, bahan tebal dan hangat. Kondisi 95%.', 'size' => 'L',   'price' => 150000, 'weight' => 350, 'color' => 'Merah'],
             ['title' => 'Jaket Denim Levi\'s Vintage 90s',         'desc' => 'Jaket denim asli era 90-an, washed effect alami. Kancing lengkap.',  'size' => 'M',   'price' => 350000, 'weight' => 700, 'color' => 'Biru'],
@@ -45,13 +42,13 @@ class ProductSeeder extends Seeder
         foreach ($items as $i => $item) {
             $seller   = $sellers[$i % $sellers->count()];
             $category = $categories->random();
-            $brand    = $brands->random();
+            $brand    = fake()->randomElement(['Uniqlo', 'Zara', 'H&M', 'Levi\'s', 'Nike', 'Adidas', null]);
             $slug     = Str::slug($item['title']) . '-' . Str::random(5);
 
             $product = Product::create([
                 'seller_id'    => $seller->id,
                 'category_id'  => $category->id,
-                'brand_id'     => $brand->id,
+                'brand'        => $brand,
                 'title'        => $item['title'],
                 'slug'         => $slug,
                 'description'  => $item['desc'],

@@ -23,6 +23,7 @@ class UpdateProfileRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20'],
             'bio' => ['nullable', 'string', 'max:500'],
             'avatar_url' => ['nullable', 'image', 'max:2048'],
+            'ktp_image_url' => ['nullable', 'string', 'url', 'max:2048'],
         ];
     }
 }

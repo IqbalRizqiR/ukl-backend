@@ -15,7 +15,8 @@ final class ProfileController extends Controller
 {
     public function __construct(
         private readonly ProfileService $profileService,
-    ) {}
+    ) {
+    }
 
     public function show(Request $request): UserResource
     {
@@ -26,9 +27,16 @@ final class ProfileController extends Controller
 
     public function update(UpdateProfileRequest $request): JsonResponse
     {
+        $data = $request->validated();
+        
+        // Jika user mengupload KTP, otomatis jadikan mereka calon seller
+        if (isset($data['ktp_image_url'])) {
+            $data['is_seller'] = true;
+        }
+
         $user = $this->profileService->updateProfile(
             $request->user()->id,
-            $request->validated(),
+            $data,
         );
 
         return response()->json([

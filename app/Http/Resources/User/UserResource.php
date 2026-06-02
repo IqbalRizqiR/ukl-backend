@@ -20,12 +20,14 @@ class UserResource extends JsonResource
             'bio' => $this->bio,
             'is_seller' => $this->is_seller,
             'is_seller_verified' => $this->is_seller_verified,
+            'ktp_image_url' => $this->when($request->user()?->is_admin, $this->ktp_image_url),
             'balance' => $this->when(
                 $request->user()?->id === $this->id,
                 fn () => $this->balance
             ),
             'rating_avg' => $this->rating_avg,
             'rating_count' => $this->rating_count,
+            'is_banned' => $this->deleted_at !== null,
             'created_at' => $this->created_at?->toISOString(),
             'default_address' => new AddressResource($this->whenLoaded('defaultAddress')), // ✅
         ];

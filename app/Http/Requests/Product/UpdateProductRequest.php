@@ -22,7 +22,7 @@ class UpdateProductRequest extends FormRequest
     {
         return [
             'category_id' => ['nullable', 'exists:categories,id'],
-            'brand_id' => ['nullable', 'exists:brands,id'],
+            'brand' => ['nullable', 'string', 'max:100'],
             'title' => ['nullable', 'string', 'max:200'],
             'description' => ['nullable', 'string'],
             'size' => ['nullable', 'string', 'max:10'],

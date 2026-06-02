@@ -24,7 +24,7 @@ final class UserManagementService
      */
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = User::query()->orderByDesc('created_at');
+        $query = User::withTrashed()->orderByDesc('created_at');
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];

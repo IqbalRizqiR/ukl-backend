@@ -18,6 +18,7 @@ class WithdrawalResource extends JsonResource
             'fee' => $this->fee,
             'net_amount' => $this->net_amount,
             'status' => $this->status,
+            'user' => new \App\Http\Resources\User\UserResource($this->whenLoaded('user')),
             'bank_account' => new BankAccountResource($this->whenLoaded('bankAccount')),
             'reference_number' => $this->reference_number,
             'processed_at' => $this->processed_at?->toISOString(),
