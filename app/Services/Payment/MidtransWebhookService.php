@@ -37,6 +37,16 @@ final class MidtransWebhookService
         $payment = $this->paymentRepository->findByMidtransOrderId($payload['order_id']);
 
         if (! $payment) {
+            // Midtrans Dashboard sends a test webhook with order_id starting with "payment_notif_test_"
+            if (str_starts_with($payload['order_id'], 'payment_notif_test_')) {
+                Log::info('Midtrans webhook: received test ping from dashboard', ['order_id' => $payload['order_id']]);
+                // Return a dummy payment or throw a specific exception to return 200?
+                // The method expects a Payment return type, but returning null would break it.
+                // We can't return a Payment, so we should throw a custom exception that is caught and returns 200.
+                // Actually, the simplest fix is in the Controller, but since we are here, we can throw a specific exception.
+                throw new \RuntimeException('MIDTRANS_TEST_PING');
+            }
+
             Log::warning('Midtrans webhook: payment not found', ['order_id' => $payload['order_id']]);
             throw new PaymentException('Pembayaran tidak ditemukan untuk order: ' . $payload['order_id']);
         }

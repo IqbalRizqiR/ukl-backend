@@ -17,7 +17,16 @@ final class MidtransWebhookController extends Controller
 
     public function handle(Request $request): JsonResponse
     {
-        $this->webhookService->handle($request->all());
+        try {
+            $this->webhookService->handle($request->all());
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === 'MIDTRANS_TEST_PING') {
+                return response()->json([
+                    'message' => 'Test webhook Midtrans berhasil diterima.',
+                ]);
+            }
+            throw $e;
+        }
 
         return response()->json([
             'message' => 'Webhook berhasil diproses.',
