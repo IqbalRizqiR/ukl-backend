@@ -43,8 +43,8 @@ final class BookmarkService
      * @param  int  $perPage
      * @return LengthAwarePaginator
      */
-    public function getUserBookmarks(string $userId, int $perPage = 15): LengthAwarePaginator
+    public function getUserBookmarks(string $userId, int $perPage = 15)
     {
-        return Bookmark::where('user_id', auth()->id())->paginate($perPage);
+        return Bookmark::all();
     }
 }
