@@ -32,7 +32,6 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        dd($this->model->with('bookmarks')->get());
         $query = $this->model->with([
             'bookmarks',
             'seller',
@@ -40,7 +39,7 @@ class ProductRepository implements ProductRepositoryInterface
             'brand',
             'images',
             'seller.defaultAddress',
-        ]);
+        ])->whereRelation('bookmarks', 'user_id', auth()->id());
 
         if (isset($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
