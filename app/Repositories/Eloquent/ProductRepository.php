@@ -7,6 +7,7 @@ namespace App\Repositories\Eloquent;
 use App\Enums\ProductStatus;
 use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ProductRepository implements ProductRepositoryInterface
@@ -16,46 +17,28 @@ class ProductRepository implements ProductRepositoryInterface
     ) {
     }
 
-    /**
-     * Base eager-load relations.
-     */
-    private function baseWith(): array
-    {
-        return ['seller', 'category', 'images'];
-    }
-
-    /**
-     * Get the current authenticated user ID (or null).
-     * Uses 'sanctum' guard explicitly so it resolves Bearer tokens
-     * even on public routes without auth:sanctum middleware.
-     */
-    private function currentUserId(): ?string
-    {
-        return auth('sanctum')->id();
-    }
-
     public function findById(string $id): ?Product
     {
-        return $this->model
-            ->with($this->baseWith())
-            ->withBookmarkStatus($this->currentUserId())
-            ->find($id);
+        return $this->model->with(['seller', 'bookmarks', 'category', 'images', 'seller.defaultAddress',])->find($id);
     }
 
     public function findBySlug(string $slug): ?Product
     {
         return $this->model
-            ->with($this->baseWith())
-            ->withBookmarkStatus($this->currentUserId())
+            ->with(['seller', 'category', 'bookmarks', 'images', 'seller.defaultAddress',])
             ->where('slug', $slug)
             ->first();
     }
 
     public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        $query = $this->model
-            ->with($this->baseWith())
-            ->withBookmarkStatus($this->currentUserId());
+        $query = $this->model->with([
+            'bookmarks',
+            'seller',
+            'category',
+            'images',
+            'seller.defaultAddress',
+        ]);
 
         if (isset($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
@@ -83,11 +66,9 @@ class ProductRepository implements ProductRepositoryInterface
             $query->where('status', ProductStatus::Active);
         }
 
-        if (isset($filters['is_bookmarked']) && $this->currentUserId()) {
-            $query->whereHas('bookmarks', function ($q) {
-                $q->where('user_id', $this->currentUserId());
-            });
-        }
+        $query->whereHas('seller.defaultAddress', function ($q) {
+            $q->whereNotNull('city_id');
+        });
 
         $sortBy = $filters['sort_by'] ?? 'created_at';
         $sortDir = $filters['sort_dir'] ?? 'desc';
@@ -111,7 +92,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         $product->update($data);
 
-        return $product->fresh($this->baseWith());
+        return $product->fresh(['seller', 'category', 'bookmarks', 'images']);
     }
 
     public function delete(string $id): bool
@@ -128,8 +109,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function getBySeller(string $sellerId, int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $query = $this->model
-            ->with(['category', 'brand', 'images'])
-            ->withBookmarkStatus($this->currentUserId())
+            ->with(['category', 'bookmarks', 'images'])
             ->where('seller_id', $sellerId);
 
         if (isset($filters['status'])) {
@@ -146,13 +126,14 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $query->paginate($perPage);
     }
-
     public function getActive(int $perPage = 15): LengthAwarePaginator
     {
         return $this->model
-            ->with($this->baseWith())
-            ->withBookmarkStatus($this->currentUserId())
+            ->with(['seller', 'bookmarks', 'category', 'images'])
             ->where('status', ProductStatus::Active)
+            ->whereHas('seller.defaultAddress', function ($q) {
+                $q->whereNotNull('city_id');
+            })
             ->latest()
             ->paginate($perPage);
     }
@@ -160,9 +141,11 @@ class ProductRepository implements ProductRepositoryInterface
     public function search(string $query, array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $builder = $this->model
-            ->with($this->baseWith())
-            ->withBookmarkStatus($this->currentUserId())
+            ->with(['seller', 'bookmarks', 'category', 'images'])
             ->where('status', ProductStatus::Active)
+            ->whereHas('seller.defaultAddress', function ($q) {
+                $q->whereNotNull('city_id');
+            })
             ->where(function ($q) use ($query) {
                 $q->where('title', 'ilike', "%{$query}%")
                     ->orWhere('description', 'ilike', "%{$query}%");

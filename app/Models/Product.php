@@ -54,7 +54,7 @@ class Product extends Model
 
     public function bookmarks(): HasMany
     {
-        return $this->hasMany(Bookmark::class);
+        return $this->hasMany(Bookmark::class)->where('user_id', auth('sanctum')->id());
     }
 
     public function orders(): HasMany
