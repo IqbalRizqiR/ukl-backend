@@ -39,7 +39,7 @@ class ProductRepository implements ProductRepositoryInterface
             'brand',
             'images',
             'seller.defaultAddress',
-        ])->all());
+        ])->get());
         $query = $this->model->with([
             'bookmarks',
             'seller',
