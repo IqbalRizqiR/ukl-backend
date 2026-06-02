@@ -24,6 +24,9 @@ Route::prefix('v1')->group(function () {
     // Confirm received (buyer)
     Route::post('/orders/{order}/confirm-received', [EscrowController::class, 'confirmReceived']);
 
+    // Cancel order (buyer)
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
+
     // Shipping (seller)
     Route::post('/orders/{order}/ship', [ShipmentController::class, 'ship'])
         ->middleware('seller');

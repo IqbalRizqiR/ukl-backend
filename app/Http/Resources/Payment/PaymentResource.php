@@ -20,6 +20,7 @@ class PaymentResource extends JsonResource
             'snap_token' => $this->snap_token,
             'redirect_url' => $this->redirect_url,
             'paid_at' => $this->paid_at?->toISOString(),
+            'expired_at' => $this->expired_at?->toISOString(),
         ];
     }
 }

@@ -66,6 +66,8 @@ final class OrderService
                 'seller_id' => $product->seller_id,
                 'product_id' => $product->id,
                 'shipping_address_id' => $data['shipping_address_id'],
+                'courier' => $data['courier'] ?? 'jne',
+                'courier_service' => $data['service'] ?? 'REG',
                 'product_price' => $productPrice,
                 'shipping_cost' => $shippingCost,
                 'service_fee' => $serviceFee,

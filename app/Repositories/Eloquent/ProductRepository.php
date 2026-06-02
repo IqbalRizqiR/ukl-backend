@@ -62,7 +62,13 @@ class ProductRepository implements ProductRepositoryInterface
 
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
+        } else {
+            $query->where('status', ProductStatus::Active);
         }
+
+        $query->whereHas('seller.defaultAddress', function ($q) {
+            $q->whereNotNull('city_id');
+        });
 
         $sortBy = $filters['sort_by'] ?? 'created_at';
         $sortDir = $filters['sort_dir'] ?? 'desc';
@@ -125,6 +131,9 @@ class ProductRepository implements ProductRepositoryInterface
         return $this->model
             ->with(['seller', 'category', 'brand', 'images'])
             ->where('status', ProductStatus::Active)
+            ->whereHas('seller.defaultAddress', function ($q) {
+                $q->whereNotNull('city_id');
+            })
             ->latest()
             ->paginate($perPage);
     }
@@ -134,6 +143,9 @@ class ProductRepository implements ProductRepositoryInterface
         $builder = $this->model
             ->with(['seller', 'category', 'brand', 'images'])
             ->where('status', ProductStatus::Active)
+            ->whereHas('seller.defaultAddress', function ($q) {
+                $q->whereNotNull('city_id');
+            })
             ->where(function ($q) use ($query) {
                 $q->where('title', 'ilike', "%{$query}%")
                     ->orWhere('description', 'ilike', "%{$query}%");

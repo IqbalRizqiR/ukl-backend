@@ -40,6 +40,17 @@ final class PaymentService
             throw new ModelNotFoundException('Pesanan tidak ditemukan.');
         }
 
+        // Check if there's a pending payment with a valid snap token
+        $existingPayment = $order->payment()
+            ->where('status', PaymentStatus::Pending)
+            ->whereNotNull('snap_token')
+            ->where('expired_at', '>', now())
+            ->first();
+
+        if ($existingPayment) {
+            return $existingPayment;
+        }
+
         $order->load(['buyer', 'product']);
 
         $snapResult = $this->midtransService->createSnapToken($order);
@@ -53,6 +64,7 @@ final class PaymentService
             'status' => PaymentStatus::Pending,
             'snap_token' => $snapResult['token'],
             'redirect_url' => $snapResult['redirect_url'],
+            'expired_at' => now()->addHours(24),
         ]);
     }
 
