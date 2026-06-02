@@ -312,6 +312,7 @@
       }
     },
     "/api/v1/products": {
+        "security": [{ "sanctum": [] }],
       "get": {
         "tags": ["Products"], "summary": "Browse products", "operationId": "products.index",
         "parameters": [
@@ -328,6 +329,7 @@
     "/api/v1/products/{slug}": {
       "get": {
         "tags": ["Products"], "summary": "Show product detail by slug", "operationId": "products.show",
+        "security": [{ "sanctum": [] }],
         "parameters": [{ "name": "slug", "in": "path", "required": true, "schema": { "type": "string" }, "example": "kemeja-flannel-uniqlo-size-l" }],
         "responses": { "200": { "description": "Product detail", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Product" } } } } } } }
       }
