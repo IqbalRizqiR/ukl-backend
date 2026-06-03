@@ -115,4 +115,30 @@ final class RajaOngkirService
 
         return $this->handleResponse($response, 'calculateCost');
     }
+
+    /**
+     * Get waybill (tracking) information from RajaOngkir API.
+     *
+     * @param  string  $waybill
+     * @param  string  $courier
+     * @return array<string, mixed>
+     * @throws RuntimeException|ConnectionException
+     */
+    public function trackWaybill(string $waybill, string $courier): array
+    {
+        if (blank($waybill) || blank($courier)) {
+            throw new \InvalidArgumentException('Waybill and courier must not be empty.');
+        }
+
+        $response = $this->client()
+            ->asForm()
+            ->post(config('rajaongkir.base_url') . '/track/waybill', [
+                'waybill' => $waybill,
+                'courier' => $courier,
+            ]);
+
+        // The RajaOngkir waybill endpoint returns a different structure in data,
+        // it usually returns an object instead of array of options.
+        return $this->handleResponse($response, 'trackWaybill');
+    }
 }

@@ -32,6 +32,7 @@ Route::prefix('v1')->group(function () {
         ->middleware('seller');
     Route::put('/shipments/{shipment}/tracking', [ShipmentController::class, 'updateTracking'])
         ->middleware('seller');
+    Route::get('/shipments/{shipment}/track', [ShipmentController::class, 'track']);
 
     // Shipping cost calculator
     Route::post('/shipping/cost', [ShippingCostController::class, 'calculate']);

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Shipment;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Shipment\ShipmentResource;
 use App\Services\Shipment\ShipmentService;
+use App\Services\Shipment\RajaOngkirService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,6 +15,7 @@ final class ShipmentController extends Controller
 {
     public function __construct(
         private readonly ShipmentService $shipmentService,
+        private readonly RajaOngkirService $rajaOngkirService,
     ) {}
 
     public function ship(Request $request, string $orderId): JsonResponse
@@ -52,5 +54,34 @@ final class ShipmentController extends Controller
             'message' => 'Nomor resi berhasil diperbarui.',
             'data' => new ShipmentResource($shipment),
         ]);
+    }
+
+    public function track(Request $request, string $shipmentId): JsonResponse
+    {
+        // For simplicity, we assume the shipmentService has a getById method or we just query it
+        // Or we just get it through eloquent
+        $shipment = \App\Models\Shipment::findOrFail($shipmentId);
+        
+        if (!$shipment->tracking_number || !$shipment->courier) {
+            return response()->json([
+                'message' => 'Resi atau kurir tidak tersedia untuk pelacakan.',
+            ], 400);
+        }
+
+        try {
+            $trackingData = $this->rajaOngkirService->trackWaybill(
+                $shipment->tracking_number,
+                $shipment->courier->value ?? (string) $shipment->courier
+            );
+            
+            return response()->json([
+                'message' => 'Berhasil mengambil data pelacakan.',
+                'data' => $trackingData,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal melacak resi: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }
