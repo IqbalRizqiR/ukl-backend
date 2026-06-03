@@ -75,6 +75,13 @@ final class OrderService
                 'notes' => $data['notes'] ?? null,
             ]);
 
+            Shipment::create([
+                'order_id' => $order->id,
+                'courier' => $data['courier'] ?? null,
+                'service' => $data['service'] ?? null,
+                'estimated_delivery_at' => $data['estimated_delivery_at'] ?? null,
+            ]);
+
             EscrowTransaction::create([
                 'order_id' => $order->id,
                 'amount' => $totalAmount,

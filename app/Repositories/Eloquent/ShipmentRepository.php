@@ -26,9 +26,9 @@ class ShipmentRepository implements ShipmentRepositoryInterface
             ->first();
     }
 
-    public function create(array $data): Shipment
+    public function create(int $orderId, array $data): Shipment
     {
-        return $this->model->create($data);
+        return $this->model->createOrUpdate($orderId, $data);
     }
 
     public function update(string $id, array $data): ?Shipment
