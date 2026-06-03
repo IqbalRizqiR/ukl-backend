@@ -51,7 +51,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
 
     public function defaultAddress(): HasOne
     {
-        return $this->hasOne(UserAddress::class)->where('is_default', true)->latestOfMany();
+        return $this->hasOne(UserAddress::class)->where('is_default', 'true')->latestOfMany();
     }
     public function bankAccounts(): HasMany
     {

@@ -99,7 +99,7 @@ final class BankAccountService
     private function unsetDefaults(string $userId): void
     {
         UserBankAccount::where('user_id', $userId)
-            ->where('is_default', true)
+            ->where('is_default', 'true')
             ->get()
             ->each(fn ($account) => $account->update(['is_default' => false]));
     }

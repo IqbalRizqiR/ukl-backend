@@ -114,7 +114,7 @@ final class AddressService
     private function unsetDefaultAddresses(string $userId): void
     {
         UserAddress::where('user_id', $userId)
-            ->where('is_default', true)
+            ->where('is_default', 'true')
             ->get()
             ->each(fn ($address) => $address->update(['is_default' => false]));
     }
