@@ -12,7 +12,7 @@ interface ShipmentRepositoryInterface
 
     public function findByOrderId(string $orderId): ?Shipment;
 
-    public function create(string $orderId, array $data): Shipment;
+    public function create(array $orderId, array $data): Shipment;
 
     public function update(string $id, array $data): ?Shipment;
 
