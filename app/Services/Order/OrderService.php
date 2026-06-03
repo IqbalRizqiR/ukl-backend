@@ -80,6 +80,9 @@ final class OrderService
                 'courier' => $data['courier'] ?? null,
                 'service' => $data['service'] ?? null,
                 'estimated_delivery_at' => $data['estimated_delivery_at'] ?? null,
+                'weight_grams' => $product->weight_grams ?? 1000,
+                'origin_city_id' => $order->seller->defaultAddress?->city_id ?? throw new \Exception('Seller has no origin city.'),
+                'destination_city_id' => $order->shippingAddress?->city_id ?? throw new \Exception('No shipping address provided.'),
             ]);
 
             EscrowTransaction::create([
