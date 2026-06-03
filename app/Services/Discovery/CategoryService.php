@@ -24,8 +24,8 @@ final class CategoryService
     {
         return Category::query()
             ->whereNull('parent_id')
-            ->where('is_active', true)
-            ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->where('is_active', 'true')
+            ->with(['children' => fn ($q) => $q->where('is_active', 'true')->orderBy('sort_order')])
             ->orderBy('sort_order')
             ->get();
     }

@@ -40,7 +40,7 @@ class BrandRepository implements BrandRepositoryInterface
     {
         return Cache::tags(['brands'])->rememberForever('brands:active', function () {
             return $this->model
-                ->where('is_active', true)
+                ->where('is_active', 'true')
                 ->orderBy('name')
                 ->get();
         });

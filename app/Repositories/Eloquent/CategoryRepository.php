@@ -57,7 +57,7 @@ class CategoryRepository implements CategoryRepositoryInterface
     {
         return Cache::tags(['categories'])->rememberForever('categories:active', function () {
             return $this->model
-                ->where('is_active', true)
+                ->where('is_active', 'true')
                 ->orderBy('name')
                 ->get();
         });
