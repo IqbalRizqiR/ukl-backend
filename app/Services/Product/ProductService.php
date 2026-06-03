@@ -65,7 +65,7 @@ final class ProductService
     {
         $data['seller_id'] = $sellerId;
         $data['status'] = ProductStatus::Active;
-        $data['slug'] = Str::slug($data['name']);
+        $data['slug'] = Str::slug($data['title']);
         $images = $data['images'] ?? [];
         unset($data['images']);
 
