@@ -16,7 +16,7 @@ class EnsureSellerVerified
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user()?->is_seller_verified) {
+        if (! $request->user()?->is_seller_verified === 'true') {
             return new JsonResponse([
                 'message' => 'Akun penjual Anda belum diverifikasi.',
             ], Response::HTTP_FORBIDDEN);

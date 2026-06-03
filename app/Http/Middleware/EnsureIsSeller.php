@@ -16,7 +16,7 @@ class EnsureIsSeller
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user()?->is_seller) {
+        if (! $request->user()?->is_seller === 'true') {
             return new JsonResponse([
                 'message' => 'Anda harus mengaktifkan mode penjual terlebih dahulu.',
             ], Response::HTTP_FORBIDDEN);
