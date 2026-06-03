@@ -44,7 +44,7 @@ final class ShipmentService
                 'tracking_number' => $data['tracking_number'] ?? null,
                 'shipping_cost' => $order['shipping_cost'] ?? 0,
                 'weight_grams' => $order['product']['weight_grams'] ?? 1000, // Standard flat weight for MVP
-                'origin_city_id' => $order['seller']['defaultAddress']['city_id'] ?? throw new \Exception('Seller has no origin city.'),
+                'origin_city_id' => 499 ?? throw new \Exception('Seller has no origin city.'),
                 'destination_city_id' => $order['shippingAddress']['city_id'] ?? throw new \Exception('No shipping address provided.'),
                 'estimated_delivery_at' => $data['estimated_delivery_at'] ?? now()->addDays(3),
                 'shipped_at' => now(),
