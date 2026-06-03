@@ -110,6 +110,29 @@ final class ProductService
             throw new \RuntimeException('Anda tidak berwenang mengubah produk ini.');
         }
 
+
+        if(isset($data['images']) && is_array($data['images'])) {
+            $existingImages = $product->images()->pluck('image_url')->toArray();
+            $newImages = array_diff($data['images'], $existingImages);
+            $removedImages = array_diff($existingImages, $data['images']);
+
+            // Add new images
+            foreach ($newImages as $url) {
+                \App\Models\ProductImage::create([
+                    'product_id' => $product->id,
+                    'image_url' => $url,
+                    'position' => $product->images()->count(),
+                ]);
+            }
+
+            // Remove deleted images
+            if (count($removedImages) > 0) {
+                \App\Models\ProductImage::where('product_id', $product->id)
+                    ->whereIn('image_url', $removedImages)
+                    ->delete();
+            }
+        }
+
         $updatedProduct = $this->productRepository->update($productId, $data);
 
         return $updatedProduct ?? $product;
