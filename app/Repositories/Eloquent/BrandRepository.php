@@ -7,6 +7,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\Brand;
 use App\Repositories\Contracts\BrandRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class BrandRepository implements BrandRepositoryInterface
 {
@@ -16,30 +17,40 @@ class BrandRepository implements BrandRepositoryInterface
 
     public function findById(string $id): ?Brand
     {
-        return $this->model->find($id);
+        return Cache::tags(['brands'])->rememberForever("brand:{$id}", function () use ($id) {
+            return $this->model->find($id);
+        });
     }
 
     public function findBySlug(string $slug): ?Brand
     {
-        return $this->model->where('slug', $slug)->first();
+        return Cache::tags(['brands'])->rememberForever("brand:slug:{$slug}", function () use ($slug) {
+            return $this->model->where('slug', $slug)->first();
+        });
     }
 
     public function getAll(): Collection
     {
-        return $this->model->orderBy('name')->get();
+        return Cache::tags(['brands'])->rememberForever('brands:all', function () {
+            return $this->model->orderBy('name')->get();
+        });
     }
 
     public function getActive(): Collection
     {
-        return $this->model
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        return Cache::tags(['brands'])->rememberForever('brands:active', function () {
+            return $this->model
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+        });
     }
 
     public function create(array $data): Brand
     {
-        return $this->model->create($data);
+        $brand = $this->model->create($data);
+        Cache::tags(['brands'])->flush();
+        return $brand;
     }
 
     public function update(string $id, array $data): ?Brand
@@ -51,6 +62,7 @@ class BrandRepository implements BrandRepositoryInterface
         }
 
         $brand->update($data);
+        Cache::tags(['brands'])->flush();
 
         return $brand->fresh();
     }
@@ -63,6 +75,11 @@ class BrandRepository implements BrandRepositoryInterface
             return false;
         }
 
-        return (bool) $brand->delete();
+        $deleted = $brand->delete();
+        if ($deleted) {
+            Cache::tags(['brands'])->flush();
+        }
+
+        return (bool) $deleted;
     }
 }

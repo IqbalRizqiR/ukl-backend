@@ -94,6 +94,9 @@ return [
             'password' => env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
+            'options' => [
+                \PDO::ATTR_EMULATE_PREPARES => true,
+            ],
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
