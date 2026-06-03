@@ -19,13 +19,14 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function findById(string $id): ?Product
     {
-        return $this->model->with(['seller', 'category', 'images', 'seller.defaultAddress',])->find($id);
+        return $this->model->with(['seller', 'category', 'images', 'seller.defaultAddress',])->withBookmarkStatus(auth('sanctum')->id())->find($id);
     }
 
     public function findBySlug(string $slug): ?Product
     {
         return $this->model
             ->with(['seller', 'category', 'images', 'seller.defaultAddress',])
+            ->withBookmarkStatus(auth('sanctum')->id())
             ->where('slug', $slug)
             ->first();
     }
