@@ -33,7 +33,7 @@ final class ShipmentService
     public function create(string $orderId, array $data): Shipment
     {
         return DB::transaction(function () use ($orderId, $data): Shipment {
-            $order = $this->orderRepository->findById($orderId)->with('seller');
+            $order = $this->orderRepository->findById($orderId)->with('seller')->first();
 
             $order = array($order);
 
