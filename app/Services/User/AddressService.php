@@ -116,6 +116,6 @@ final class AddressService
         UserAddress::where('user_id', $userId)
             ->where('is_default', 'true')
             ->get()
-            ->each(fn ($address) => $address->update(['is_default' => false]));
+            ->each(fn ($address) => $address->update(['is_default' => 'false']));
     }
 }
