@@ -101,6 +101,7 @@ final class ProductService
     public function update(string $sellerId, string $productId, array $data): Product
     {
         $product = $this->productRepository->findById($productId);
+        $images = $data['images'] ?? [];
 
         if (!$product) {
             throw new ModelNotFoundException('Produk tidak ditemukan.');
@@ -111,31 +112,22 @@ final class ProductService
         }
 
 
-        if(isset($data['images']) && is_array($data['images'])) {
-            $existingImages = $product->images()->pluck('image_url')->toArray();
-            $newImages = array_diff($data['images'], $existingImages);
-            $removedImages = array_diff($existingImages, $data['images']);
-
-            // Add new images
-            foreach ($newImages as $url) {
-                \App\Models\ProductImage::create([
-                    'product_id' => $product->id,
-                    'image_url' => $url,
-                    'position' => $product->images()->count(),
-                ]);
-            }
-
-            // Remove deleted images
-            if (count($removedImages) > 0) {
-                \App\Models\ProductImage::where('product_id', $product->id)
-                    ->whereIn('image_url', $removedImages)
-                    ->delete();
+        if (is_array($images) && count($images) > 0) {
+            $position = 0;
+            foreach ($images as $url) {
+                if (is_string($url)) {
+                    \App\Models\ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_url' => $url,
+                        'position' => $position++,
+                    ]);
+                }
             }
         }
 
         $updatedProduct = $this->productRepository->update($productId, $data);
 
-        return $updatedProduct ?? $product;
+        return $updatedProduct->fresh(['images']) ?? $product->fresh(['images']) ?? $product;
     }
 
     /**
