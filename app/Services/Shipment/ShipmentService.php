@@ -33,17 +33,20 @@ final class ShipmentService
     public function create(string $orderId, array $data): Shipment
     {
         return DB::transaction(function () use ($orderId, $data): Shipment {
-            $order = $this->orderRepository->findById($orderId)->with('seller')->first()->toArray();
+            $order = $this->orderRepository->findById($orderId)->with('seller')->first();
+
+            $arrayorder = $order->toArray();
 
             if (! $order) {
                 throw new ModelNotFoundException('Pesanan tidak ditemukan.');
             }
-            $shipment = $this->shipmentRepository->create($order, [
-                'courier' => $data['courier'] ?? $order['courier'],
-                'service' => $data['service'] ?? $order['courier_service'] ?? 'REG',
+            $shipment = $this->shipmentRepository->create($arrayorder, [
+                'courier' => $data['courier'] ?? $arrayorder['courier'],
+                'service' => $data['service'] ?? $arrayorder['courier_service'] ?? 'REG',
                 'tracking_number' => $data['tracking_number'] ?? null,
-                'shipping_cost' => $order['shipping_cost'] ?? 0,
-                'weight_grams' => $order['product']['weight_grams'] ?? 1000, // Standard flat weight for MVP
+                'order_id' => $arrayorder['id'],
+                'shipping_cost' => $arrayorder['shipping_cost'] ?? 0,
+                'weight_grams' => $arrayorder['product']['weight_grams'] ?? 1000, // Standard flat weight for MVP
                 'origin_city_id' => 499 ?? throw new \Exception('Seller has no origin city.'),
                 'destination_city_id' => 204 ?? throw new \Exception('No shipping address provided.'),
                 'estimated_delivery_at' => $data['estimated_delivery_at'] ?? now()->addDays(3),
