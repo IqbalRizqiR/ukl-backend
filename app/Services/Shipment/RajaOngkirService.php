@@ -133,7 +133,7 @@ final class RajaOngkirService
         $response = $this->client()
             ->asForm()
             ->post(config('rajaongkir.base_url') . '/track/waybill', [
-                'waybill' => $waybill,
+                'awb' => $waybill,
                 'courier' => $courier,
             ]);
 
