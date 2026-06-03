@@ -28,7 +28,7 @@ class ShipmentRepository implements ShipmentRepositoryInterface
 
     public function create(string $orderId, array $data): Shipment
     {
-        return $this->model->createOrUpdate($orderId, $data);
+        return $this->model->updateOrCreate($orderId, $data);
     }
 
     public function update(string $id, array $data): ?Shipment
