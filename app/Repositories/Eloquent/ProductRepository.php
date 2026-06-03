@@ -9,12 +9,9 @@ use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class ProductRepository implements ProductRepositoryInterface
 {
-    // Optimized eager load columns
     protected array $optimizedWith = [
         'seller',
         'category',
@@ -27,79 +24,28 @@ class ProductRepository implements ProductRepositoryInterface
     ) {
     }
 
-    protected function attachBookmarkStatus(Product|LengthAwarePaginator|Collection|null $data): Product|LengthAwarePaginator|Collection|null
-    {
-        if (!$data) {
-            return $data;
-        }
-
-        $userId = auth('sanctum')->id();
-        
-        if (!$userId) {
-            // Set false for all
-            if ($data instanceof Product) {
-                $data->setAttribute('is_bookmarked', false);
-            } elseif ($data instanceof LengthAwarePaginator) {
-                $data->getCollection()->transform(function ($product) {
-                    $product->setAttribute('is_bookmarked', false);
-                    return $product;
-                });
-            } elseif ($data instanceof Collection) {
-                $data->transform(function ($product) {
-                    $product->setAttribute('is_bookmarked', false);
-                    return $product;
-                });
-            }
-            return $data;
-        }
-
-        if ($data instanceof Product) {
-            $isBookmarked = DB::table('bookmarks')
-                ->where('product_id', $data->id)
-                ->where('user_id', $userId)
-                ->exists();
-            $data->setAttribute('is_bookmarked', $isBookmarked);
-        } else {
-            $collection = $data instanceof LengthAwarePaginator ? $data->getCollection() : $data;
-            $productIds = $collection->pluck('id')->toArray();
-            
-            $bookmarkedIds = DB::table('bookmarks')
-                ->whereIn('product_id', $productIds)
-                ->where('user_id', $userId)
-                ->pluck('product_id')
-                ->toArray();
-                
-            $collection->transform(function ($product) use ($bookmarkedIds) {
-                $product->setAttribute('is_bookmarked', in_array($product->id, $bookmarkedIds));
-                return $product;
-            });
-        }
-
-        return $data;
-    }
-
     public function findById(string $id): ?Product
     {
-        $product = Cache::tags(['products'])->rememberForever("product:{$id}", function () use ($id) {
-            return $this->model->with($this->optimizedWith)->find($id);
-        });
-
-        return $this->attachBookmarkStatus($product);
+        return $this->model
+            ->with($this->optimizedWith)
+            ->withBookmarkStatus(auth('sanctum')->id())
+            ->find($id);
     }
 
     public function findBySlug(string $slug): ?Product
     {
-        $product = Cache::tags(['products'])->rememberForever("product:slug:{$slug}", function () use ($slug) {
-            return $this->model->with($this->optimizedWith)->where('slug', $slug)->first();
-        });
-
-        return $this->attachBookmarkStatus($product);
+        return $this->model
+            ->with($this->optimizedWith)
+            ->withBookmarkStatus(auth('sanctum')->id())
+            ->where('slug', $slug)
+            ->first();
     }
 
     public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        // For dynamic filters, we rely on DB index, but we optimize the eager load columns!
-        $query = $this->model->with($this->optimizedWith);
+        $query = $this->model
+            ->with($this->optimizedWith)
+            ->withBookmarkStatus(auth('sanctum')->id());
 
         if (isset($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
@@ -135,15 +81,12 @@ class ProductRepository implements ProductRepositoryInterface
         $sortDir = $filters['sort_dir'] ?? 'desc';
         $query->orderBy($sortBy, $sortDir);
 
-        $paginator = $query->paginate($perPage);
-        return $this->attachBookmarkStatus($paginator);
+        return $query->paginate($perPage);
     }
 
     public function create(array $data): Product
     {
-        $product = $this->model->create($data);
-        Cache::tags(['products'])->flush();
-        return $product;
+        return $this->model->create($data);
     }
 
     public function update(string $id, array $data): ?Product
@@ -155,11 +98,6 @@ class ProductRepository implements ProductRepositoryInterface
         }
 
         $product->update($data);
-        
-        // Flush specific product cache
-        Cache::tags(['products'])->forget("product:{$id}");
-        Cache::tags(['products'])->forget("product:slug:{$product->slug}");
-        Cache::tags(['products', 'products_lists'])->flush();
 
         return $product->fresh($this->optimizedWith);
     }
@@ -172,19 +110,15 @@ class ProductRepository implements ProductRepositoryInterface
             return false;
         }
 
-        $deleted = $product->delete();
-        if ($deleted) {
-            Cache::tags(['products'])->forget("product:{$id}");
-            Cache::tags(['products'])->forget("product:slug:{$product->slug}");
-            Cache::tags(['products_lists'])->flush();
-        }
-        
-        return (bool) $deleted;
+        return (bool) $product->delete();
     }
 
     public function getBySeller(string $sellerId, int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        $query = $this->model->with(['category', 'images'])->where('seller_id', $sellerId);
+        $query = $this->model
+            ->with(['category', 'images'])
+            ->withBookmarkStatus(auth('sanctum')->id())
+            ->where('seller_id', $sellerId);
 
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -198,33 +132,27 @@ class ProductRepository implements ProductRepositoryInterface
         $sortDir = $filters['sort_dir'] ?? 'desc';
         $query->orderBy($sortBy, $sortDir);
 
-        $paginator = $query->paginate($perPage);
-        return $this->attachBookmarkStatus($paginator);
+        return $query->paginate($perPage);
     }
     
     public function getActive(int $perPage = 15): LengthAwarePaginator
     {
-        $page = request()->get('page', 1);
-        
-        // Cache the default active browse view for 5 minutes since it's highly hit
-        $paginator = Cache::tags(['products', 'products_lists'])->remember("products:active:page:{$page}:limit:{$perPage}", 300, function () use ($perPage) {
-            return $this->model
-                ->with($this->optimizedWith)
-                ->where('status', ProductStatus::Active)
-                ->whereHas('seller.defaultAddress', function ($q) {
-                    $q->whereNotNull('city_id');
-                })
-                ->latest()
-                ->paginate($perPage);
-        });
-
-        return $this->attachBookmarkStatus($paginator);
+        return $this->model
+            ->with($this->optimizedWith)
+            ->withBookmarkStatus(auth('sanctum')->id())
+            ->where('status', ProductStatus::Active)
+            ->whereHas('seller.defaultAddress', function ($q) {
+                $q->whereNotNull('city_id');
+            })
+            ->latest()
+            ->paginate($perPage);
     }
 
     public function search(string $query, array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $builder = $this->model
             ->with($this->optimizedWith)
+            ->withBookmarkStatus(auth('sanctum')->id())
             ->where('status', ProductStatus::Active)
             ->whereHas('seller.defaultAddress', function ($q) {
                 $q->whereNotNull('city_id');
@@ -254,8 +182,7 @@ class ProductRepository implements ProductRepositoryInterface
             $builder->where('price', '<=', $filters['max_price']);
         }
 
-        $paginator = $builder->latest()->paginate($perPage);
-        return $this->attachBookmarkStatus($paginator);
+        return $builder->latest()->paginate($perPage);
     }
 
     public function incrementViews(string $id): void
