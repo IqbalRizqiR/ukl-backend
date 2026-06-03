@@ -7,6 +7,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\Category;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class CategoryRepository implements CategoryRepositoryInterface
 {
@@ -16,45 +17,57 @@ class CategoryRepository implements CategoryRepositoryInterface
 
     public function findById(string $id): ?Category
     {
-        return $this->model->with(['children', 'parent'])->find($id);
+        return Cache::tags(['categories'])->rememberForever("category:{$id}", function () use ($id) {
+            return $this->model->with(['children', 'parent'])->find($id);
+        });
     }
 
     public function findBySlug(string $slug): ?Category
     {
-        return $this->model
-            ->with(['children', 'parent'])
-            ->where('slug', $slug)
-            ->first();
+        return Cache::tags(['categories'])->rememberForever("category:slug:{$slug}", function () use ($slug) {
+            return $this->model
+                ->with(['children', 'parent'])
+                ->where('slug', $slug)
+                ->first();
+        });
     }
 
     public function getAll(): Collection
     {
-        return $this->model
-            ->with(['children'])
-            ->orderBy('name')
-            ->get();
+        return Cache::tags(['categories'])->rememberForever('categories:all', function () {
+            return $this->model
+                ->with(['children'])
+                ->orderBy('name')
+                ->get();
+        });
     }
 
     public function getRootCategories(): Collection
     {
-        return $this->model
-            ->with(['children'])
-            ->whereNull('parent_id')
-            ->orderBy('name')
-            ->get();
+        return Cache::tags(['categories'])->rememberForever('categories:root', function () {
+            return $this->model
+                ->with(['children'])
+                ->whereNull('parent_id')
+                ->orderBy('name')
+                ->get();
+        });
     }
 
     public function getActive(): Collection
     {
-        return $this->model
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        return Cache::tags(['categories'])->rememberForever('categories:active', function () {
+            return $this->model
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+        });
     }
 
     public function create(array $data): Category
     {
-        return $this->model->create($data);
+        $category = $this->model->create($data);
+        Cache::tags(['categories'])->flush();
+        return $category;
     }
 
     public function update(string $id, array $data): ?Category
@@ -66,6 +79,7 @@ class CategoryRepository implements CategoryRepositoryInterface
         }
 
         $category->update($data);
+        Cache::tags(['categories'])->flush();
 
         return $category->fresh();
     }
@@ -78,6 +92,11 @@ class CategoryRepository implements CategoryRepositoryInterface
             return false;
         }
 
-        return (bool) $category->delete();
+        $deleted = $category->delete();
+        if ($deleted) {
+            Cache::tags(['categories'])->flush();
+        }
+
+        return (bool) $deleted;
     }
 }
