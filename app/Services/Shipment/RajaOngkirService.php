@@ -137,10 +137,9 @@ final class RajaOngkirService
         ];
 
         if ($phoneNumber) {
-            // Komerce requires `last_phone_number` integer (at least the last 4-5 digits).
-            // Passing the stripped phone number string will be converted to int or string by HTTP client
-            // We just strip non-digits to be safe.
-            $payload['last_phone_number'] = (int) preg_replace('/\D/', '', $phoneNumber);
+            // Komerce specifically checks the last 5 digits of the phone number.
+            $cleanPhone = preg_replace('/\D/', '', $phoneNumber);
+            $payload['last_phone_number'] = (int) substr($cleanPhone, -5);
         }
 
         $response = $this->client()
