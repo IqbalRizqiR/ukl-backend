@@ -33,12 +33,11 @@ final class ShipmentService
     public function create(string $orderId, array $data): Shipment
     {
         return DB::transaction(function () use ($orderId, $data): Shipment {
-            $order = $this->orderRepository->findById($orderId)->toArray();
+            $order = $this->orderRepository->findById($orderId)->with('seller')->toArray();
 
             if (! $order) {
                 throw new ModelNotFoundException('Pesanan tidak ditemukan.');
             }
-            dd($order);
             $shipment = $this->shipmentRepository->create($order, [
                 'courier' => $data['courier'] ?? $order['courier'],
                 'service' => $data['service'] ?? $order['courier_service'] ?? 'REG',
