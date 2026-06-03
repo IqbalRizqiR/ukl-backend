@@ -76,6 +76,27 @@ final class ShipmentController extends Controller
                 $phoneNumber
             );
             
+            // Sync status based on tracking
+            if ($shipment->order && isset($trackingData['summary']['status'])) {
+                $trackingStatus = strtolower($trackingData['summary']['status']);
+                $orderStatus = $shipment->order->status;
+                
+                if ($trackingStatus === 'delivered' && $orderStatus !== \App\Enums\OrderStatus::Delivered && $orderStatus !== \App\Enums\OrderStatus::Completed) {
+                    $shipment->order->update(['status' => \App\Enums\OrderStatus::Delivered]);
+                    
+                    $escrow = \App\Models\EscrowTransaction::where('order_id', $shipment->order->id)->first();
+                    if ($escrow && $escrow->status !== \App\Enums\EscrowStatus::Delivered && $escrow->status !== \App\Enums\EscrowStatus::Completed) {
+                        $escrow->update(['status' => \App\Enums\EscrowStatus::Delivered]);
+                    }
+                } elseif (in_array($trackingStatus, ['on process', 'in transit', 'allocated']) && $orderStatus === \App\Enums\OrderStatus::Paid) {
+                    $shipment->order->update(['status' => \App\Enums\OrderStatus::Shipped]);
+                    $escrow = \App\Models\EscrowTransaction::where('order_id', $shipment->order->id)->first();
+                    if ($escrow && $escrow->status === \App\Enums\EscrowStatus::Pending) {
+                        $escrow->update(['status' => \App\Enums\EscrowStatus::InDelivery]);
+                    }
+                }
+            }
+            
             return response()->json([
                 'message' => 'Berhasil mengambil data pelacakan.',
                 'data' => $trackingData,
