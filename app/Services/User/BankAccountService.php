@@ -100,6 +100,7 @@ final class BankAccountService
     {
         UserBankAccount::where('user_id', $userId)
             ->where('is_default', true)
-            ->update(['is_default' => false]);
+            ->get()
+            ->each(fn ($account) => $account->update(['is_default' => false]));
     }
 }
