@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
 final class ProductService
 {
@@ -64,12 +65,12 @@ final class ProductService
     {
         $data['seller_id'] = $sellerId;
         $data['status'] = ProductStatus::Active;
-        
+        $data['slug'] = Str::slug($data['name']);
         $images = $data['images'] ?? [];
         unset($data['images']);
 
         $product = $this->productRepository->create($data);
-        
+
         if (is_array($images) && count($images) > 0) {
             $position = 0;
             foreach ($images as $url) {
