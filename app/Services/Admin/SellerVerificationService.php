@@ -24,8 +24,8 @@ final class SellerVerificationService
     public function list(int $perPage = 15): LengthAwarePaginator
     {
         return User::query()
-            ->where('is_seller', true)
-            ->where('is_seller_verified', false)
+            ->where('is_seller', 'true')
+            ->where('is_seller_verified', 'false')
             ->whereNotNull('ktp_image_url')
             ->orderBy('created_at')
             ->paginate($perPage);
