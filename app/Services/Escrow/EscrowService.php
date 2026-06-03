@@ -200,17 +200,24 @@ final class EscrowService
                 throw new EscrowException('Anda tidak berwenang mengkonfirmasi pesanan ini.');
             }
 
-            if ($order->status !== OrderStatus::Delivered) {
-                throw new EscrowException('Pesanan harus dalam status dikirim untuk mengkonfirmasi penerimaan.');
+            if (! in_array($order->status, [OrderStatus::Shipped, OrderStatus::Delivered], true)) {
+                throw new EscrowException('Pesanan harus dalam status dikirim atau diterima untuk mengkonfirmasi penerimaan.');
             }
 
             $escrow = $this->getEscrowByOrderId($orderId);
 
-            if ($escrow->status !== EscrowStatus::Delivered) {
+            if (! in_array($escrow->status, [EscrowStatus::InDelivery, EscrowStatus::Delivered], true)) {
                 throw EscrowException::invalidTransition(
                     $escrow->status->value,
                     EscrowStatus::Completed->value,
                 );
+            }
+
+            // If we are still in "Shipped", let's update it to "Delivered" first
+            // to maintain a correct state flow before releasing.
+            if ($escrow->status === EscrowStatus::InDelivery) {
+                $escrow->update(['status' => EscrowStatus::Delivered]);
+                $this->orderRepository->updateStatus($orderId, OrderStatus::Delivered);
             }
 
             return $this->release($orderId);

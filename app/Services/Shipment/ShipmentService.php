@@ -39,7 +39,7 @@ final class ShipmentService
                 throw new ModelNotFoundException('Pesanan tidak ditemukan.');
             }
 
-            $shipment = $this->shipmentRepository->create((int) $orderId, [
+            $shipment = $this->shipmentRepository->create($orderId, [
                 'courier' => $data['courier'] ?? $order->courier,
                 'service' => $data['service'] ?? $order->courier_service ?? 'REG',
                 'tracking_number' => $data['tracking_number'] ?? null,
