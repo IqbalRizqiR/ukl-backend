@@ -58,9 +58,8 @@ final class ShipmentController extends Controller
 
     public function track(Request $request, string $shipmentId): JsonResponse
     {
-        // For simplicity, we assume the shipmentService has a getById method or we just query it
-        // Or we just get it through eloquent
-        $shipment = \App\Models\Shipment::findOrFail($shipmentId);
+        // Load the shipment along with the order's shipping address to get the phone number
+        $shipment = \App\Models\Shipment::with('order.shippingAddress')->findOrFail($shipmentId);
         
         if (!$shipment->tracking_number || !$shipment->courier) {
             return response()->json([
@@ -69,9 +68,12 @@ final class ShipmentController extends Controller
         }
 
         try {
+            $phoneNumber = $shipment->order?->shippingAddress?->phone;
+            
             $trackingData = $this->rajaOngkirService->trackWaybill(
                 $shipment->tracking_number,
-                $shipment->courier->value ?? (string) $shipment->courier
+                $shipment->courier->value ?? (string) $shipment->courier,
+                $phoneNumber
             );
             
             return response()->json([

@@ -121,21 +121,31 @@ final class RajaOngkirService
      *
      * @param  string  $waybill
      * @param  string  $courier
+     * @param  string|null $phoneNumber
      * @return array<string, mixed>
      * @throws RuntimeException|ConnectionException
      */
-    public function trackWaybill(string $waybill, string $courier): array
+    public function trackWaybill(string $waybill, string $courier, ?string $phoneNumber = null): array
     {
         if (blank($waybill) || blank($courier)) {
             throw new \InvalidArgumentException('Waybill and courier must not be empty.');
         }
 
+        $payload = [
+            'awb' => $waybill,
+            'courier' => $courier,
+        ];
+
+        if ($phoneNumber) {
+            // Komerce requires `last_phone_number` integer (at least the last 4-5 digits).
+            // Passing the stripped phone number string will be converted to int or string by HTTP client
+            // We just strip non-digits to be safe.
+            $payload['last_phone_number'] = (int) preg_replace('/\D/', '', $phoneNumber);
+        }
+
         $response = $this->client()
             ->asForm()
-            ->post(config('rajaongkir.base_url') . '/track/waybill', [
-                'awb' => $waybill,
-                'courier' => $courier,
-            ]);
+            ->post(config('rajaongkir.base_url') . '/track/waybill', $payload);
 
         // The RajaOngkir waybill endpoint returns a different structure in data,
         // it usually returns an object instead of array of options.
