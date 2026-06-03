@@ -23,7 +23,7 @@ class OrderSeeder extends Seeder
 {
     public function run(): void
     {
-        $buyers  = User::where('is_seller', false)->where('is_admin', false)->get();
+        $buyers  = User::where('is_seller', 'false')->where('is_admin', 'false')->get();
         $products = Product::with('seller')->get();
 
         if ($buyers->isEmpty() || $products->isEmpty()) {

@@ -17,7 +17,7 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        $sellers    = User::where('is_seller', true)->get();
+        $sellers    = User::where('is_seller', 'true')->get();
         $categories = Category::all();
         $items = [
             ['title' => 'Kemeja Flanel Uniqlo Merah Hitam',        'desc' => 'Kemeja flanel lengan panjang, bahan tebal dan hangat. Kondisi 95%.', 'size' => 'L',   'price' => 150000, 'weight' => 350, 'color' => 'Merah'],

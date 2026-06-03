@@ -12,7 +12,7 @@ class UserBankAccountSeeder extends Seeder
 {
     public function run(): void
     {
-        $sellers = User::where('is_seller', true)->get();
+        $sellers = User::where('is_seller', 'true')->get();
         $banks = ['BCA', 'BNI', 'BRI', 'Mandiri', 'CIMB Niaga', 'Bank Jago', 'SeaBank'];
 
         foreach ($sellers as $seller) {

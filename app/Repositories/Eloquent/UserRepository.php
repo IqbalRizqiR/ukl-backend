@@ -75,7 +75,7 @@ class UserRepository implements UserRepositoryInterface
     public function getSellers(int $perPage = 15): LengthAwarePaginator
     {
         return $this->model
-            ->where('is_seller', true)
+            ->where('is_seller', 'true')
             ->latest()
             ->paginate($perPage);
     }
@@ -83,7 +83,7 @@ class UserRepository implements UserRepositoryInterface
     public function getAdmins(): Collection
     {
         return $this->model
-            ->where('is_admin', true)
+            ->where('is_admin', 'true')
             ->get();
     }
 

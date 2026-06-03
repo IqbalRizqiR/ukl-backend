@@ -28,10 +28,10 @@ final class ProfileController extends Controller
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $data = $request->validated();
-        
+
         // Jika user mengupload KTP, otomatis jadikan mereka calon seller
         if (isset($data['ktp_image_url'])) {
-            $data['is_seller'] = true;
+            $data['is_seller'] = 'true';
         }
 
         $user = $this->profileService->updateProfile(
