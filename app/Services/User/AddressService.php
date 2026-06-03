@@ -42,17 +42,17 @@ final class AddressService
     public function create(string $userId, array $data): UserAddress
     {
         return DB::transaction(function () use ($userId, $data): UserAddress {
-            $isDefault = $data['is_default'] ?? false;
+            $isDefault = $data['is_default'] ?? 'false';
 
             // If setting as default, unset other defaults first
-            if ($isDefault) {
+            if ($isDefault === 'true') {
                 $this->unsetDefaultAddresses($userId);
             }
 
             // If this is the user's first address, make it default
             $count = UserAddress::where('user_id', $userId)->count();
             if ($count === 0) {
-                $isDefault = true;
+                $isDefault = 'true';
             }
 
             return UserAddress::create([

@@ -35,16 +35,16 @@ final class BankAccountService
     public function create(string $userId, array $data): UserBankAccount
     {
         return DB::transaction(function () use ($userId, $data): UserBankAccount {
-            $isDefault = $data['is_default'] ?? false;
+            $isDefault = $data['is_default'] ?? 'false';
 
-            if ($isDefault) {
+            if ($isDefault === 'true') {
                 $this->unsetDefaults($userId);
             }
 
             // If first bank account, make it default
             $count = UserBankAccount::where('user_id', $userId)->count();
             if ($count === 0) {
-                $isDefault = true;
+                $isDefault = 'true';
             }
 
             return UserBankAccount::create([
@@ -87,7 +87,7 @@ final class BankAccountService
                 ->where('user_id', $userId)
                 ->firstOrFail();
 
-            $account->update(['is_default' => true]);
+            $account->update(['is_default' => 'true']);
 
             return $account->refresh();
         });
@@ -101,6 +101,6 @@ final class BankAccountService
         UserBankAccount::where('user_id', $userId)
             ->where('is_default', 'true')
             ->get()
-            ->each(fn ($account) => $account->update(['is_default' => false]));
+            ->each(fn ($account) => $account->update(['is_default' => 'false']));
     }
 }

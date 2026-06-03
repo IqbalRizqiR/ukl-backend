@@ -21,8 +21,8 @@ class UserBankAccountSeeder extends Seeder
                 'bank_name'           => fake()->randomElement($banks),
                 'account_number'      => fake()->numerify('##########'),
                 'account_holder_name' => strtoupper($seller->name),
-                'is_default'          => true,
-                'is_verified'         => true,
+                'is_default'          => 'true',
+                'is_verified'         => 'true',
             ]);
         }
     }
