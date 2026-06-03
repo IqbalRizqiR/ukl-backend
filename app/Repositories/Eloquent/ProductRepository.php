@@ -16,10 +16,10 @@ class ProductRepository implements ProductRepositoryInterface
 {
     // Optimized eager load columns
     protected array $optimizedWith = [
-        'seller:id,full_name,username,avatar_url',
-        'category:id,name,slug,parent_id',
+        'seller',
+        'category',
         'images',
-        'seller.defaultAddress:id,user_id,city_id,province_id,postal_code'
+        'seller.defaultAddress'
     ];
 
     public function __construct(
@@ -184,7 +184,7 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function getBySeller(string $sellerId, int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
-        $query = $this->model->with(['category:id,name,slug', 'images'])->where('seller_id', $sellerId);
+        $query = $this->model->with(['category', 'images'])->where('seller_id', $sellerId);
 
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
