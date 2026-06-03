@@ -60,7 +60,7 @@ final class SellerVerificationService
         }
 
         $this->userRepository->update($userId, [
-            'is_seller_verified' => true,
+            'is_seller_verified' => 'true',
         ]);
 
         return $user->refresh();
